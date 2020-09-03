@@ -3,7 +3,7 @@ import * as util from "util";
 
 const paradoxProperty = Symbol("paradoxPropertyFormat");
 
-export function HasParadoxPropertyFormat(paradoxPropertyName: string, templateGenerator?: ()=>string): any {
+export function HasParadoxPropertyFormat(paradoxPropertyName: string, templateGenerator?: (target:any)=>string): any {
     const template = templateGenerator || util.format("%s=%s", paradoxPropertyName)
     return Reflect.metadata(paradoxProperty, template);
 }

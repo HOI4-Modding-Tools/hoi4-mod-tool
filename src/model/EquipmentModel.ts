@@ -50,7 +50,7 @@ export default class EquipmentModel extends ModEntityModel {
      */
     //@HasParadoxPropertyFormat("manpower")
     private manpower: number;
-    @HasParadoxPropertyFormat("resources",(target)=>{
+    @HasParadoxPropertyFormat("resources",(target: any)=>{
         if(_.isEmpty(target.resources)) {
             return "";
         }
