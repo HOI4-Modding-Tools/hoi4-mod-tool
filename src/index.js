@@ -3,13 +3,17 @@ const path = require('path');
 
 const Engine = require("./engine").default;
 
-String.prototype.toCamelCase = function () {
+String.prototype.fromSnakeCaseToCamelCase = function () {
     const matcher = /_(\w)/;
     return this.replace(matcher, function (match, p1) {
         return p1.toUpperCase();
     });
 };
 
+String.prototype.fromCamelCaseToSnakeCase = function(){
+    const capitalMatcher = /([A-Z])/;
+    return this.replace(capitalMatcher, "_$&").toLowerCase();
+}
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
