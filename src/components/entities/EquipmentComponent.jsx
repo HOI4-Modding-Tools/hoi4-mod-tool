@@ -1,54 +1,12 @@
 import {connect} from 'react-redux';
 import React from "react";
-import FormControl from "@material-ui/core/FormControl";
-import InputLabel from "@material-ui/core/InputLabel";
-import Input from "@material-ui/core/Input";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import Checkbox from "@material-ui/core/Checkbox";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import Button from "@material-ui/core/Button";
-
 import { withRouter } from "react-router-dom";
+import EntityEditComponent from "./EntityEditComponent";
+import * as _ from "lodash";
 
-export class EquipmentComponent extends React.Component {
+export class EquipmentComponent extends EntityEditComponent {
     constructor(props) {
         super(props);
-        this.state = {
-            item: props.existingEquipment || {},
-            fieldErrors: {}
-        };
-
-        this.extractValueFromEvent = (e, fieldType) => {
-            switch (fieldType) {
-                case "boolean":
-                    return e.target.checked;
-                default:
-                    return e.target.value;
-            }
-        }
-
-        this.saveEntity = () => {
-            this.props.save(this.state.item);
-        }
-
-        this.update = (property, validators) => {
-            return (event) => {
-                const newValue = this.extractValueFromEvent(event, this.fields[property].type);
-                const valid = !validators || validators.reduce((isValidSoFar, validator) => isValidSoFar && validator(newValue), true);
-                const state = {...this.state};
-                if (valid) {
-                    state.item[property] = newValue;
-                    delete state.fieldErrors[property];
-                } else {
-                    state.fieldErrors[property] = true;
-                }
-                this.setState(state);
-
-            }
-        }
 
         this.noWhiteSpace = input => {
             return /^\S*$/.test(input);
@@ -59,7 +17,8 @@ export class EquipmentComponent extends React.Component {
                 type: "text",
                 label: "Name",
                 validators: [this.noWhiteSpace],
-                helperText: "Must be a string containing no whitespace."
+                helperText: "Must be a string containing no whitespace.",
+                required: true
             },
             isArchetype: {
                 type: "boolean",
@@ -68,8 +27,8 @@ export class EquipmentComponent extends React.Component {
             archetype: {
                 type: "text",
                 label: "Archetype",
-                when: () => {
-                    return !this.state.item.isArchetype
+                enabledWhen: () => {
+                    return !this.props.entity.isArchetype
                 },
                 helperText: "The archetype this equipment derives from."
             },
@@ -196,85 +155,29 @@ export class EquipmentComponent extends React.Component {
             }
         }
     }
-
-    render() {
-        return (
-            <div>
-                {Object.keys(this.fields).map((fieldId, index) => {
-                    const field = this.fields[fieldId];
-                    const enabled = !field.when || field.when();
-                    switch (field.type) {
-                        case "text":
-                            return (
-                                <FormGroup key={fieldId}>
-                                    <FormControl error={this.state.fieldErrors[fieldId]}>
-                                        <InputLabel>{field.label}</InputLabel>
-                                        <Input value={this.state.item[fieldId]} disabled={!enabled}
-                                               onChange={this.update(fieldId, field.validators)}/>
-                                        <FormHelperText>{field.helperText}</FormHelperText>
-                                    </FormControl>
-                                </FormGroup>);
-                        case "boolean":
-                            return (
-                                <FormGroup key={fieldId}>
-                                    <FormControl error={this.state.fieldErrors[fieldId]}>
-                                        <FormControlLabel
-                                            control={<Checkbox checked={this.state.item[fieldId]} disabled={!enabled}
-                                                               onChange={this.update(fieldId, field.validators)}/>}
-                                            label={field.label}/>
-                                        <FormHelperText>{field.helperText}</FormHelperText>
-                                    </FormControl>
-                                </FormGroup>);
-                        case "select":
-                            return (
-                                <FormGroup key={fieldId}>
-                                    <FormControl error={this.state.fieldErrors[fieldId]}>
-                                        <InputLabel>{field.label}</InputLabel>
-                                        <Select value={this.state.item[fieldId] || ""}
-                                                onChange={this.update(fieldId, field.validators)}>
-                                            {this.fields[fieldId].options.map(selectOption => {
-                                                return (<MenuItem value={selectOption}>{selectOption}</MenuItem>)
-                                            })}
-                                        </Select>
-                                    </FormControl>
-                                </FormGroup>
-                            )
-                        case "number":
-                            return (
-                                <FormGroup key={fieldId}>
-                                    <FormControl error={this.state.fieldErrors[fieldId]}>
-                                        <InputLabel>{field.label}</InputLabel>
-                                        <Input value={this.state.item[fieldId]} disabled={!enabled} type="number"
-                                               onChange={this.update(fieldId, field.validators)}/>
-                                        <FormHelperText>{field.helperText}</FormHelperText>
-                                    </FormControl>
-                                </FormGroup>);
-                    }
-
-                })}
-                <Button onClick={this.saveEntity} color="primary" variant="contained">
-                    Save
-                </Button>
-            </div>
-        );
-    }
 }
 
-const connected = connect((state, ownProps) => {
+const connected = withRouter(connect((state, ownProps) => {
+    const entity = _.get(state.mods, [decodeURIComponent(ownProps.match.params.modName), "_equipment", ownProps.match.params.equipment], {})
     return {
-        existingEquipment: state.activeMod._equipment[ownProps.match.params.equipment]
+        modName: decodeURIComponent(ownProps.match.params.modName),
+        path: ownProps.match.params,
+        entity,
+        category: "equipment",
+        entityName: entity.name || "new"
     }
 }, (dispatch) => {
     return {
-        save: function(item) {
+        save: function(mod, entity) {
             console.log("Saving entity");
             dispatch({
                 type: "SaveEntity",
+                mod,
                 category: "equipment",
-                entity: item
+                entity
             });
         }
     }
-})(withRouter(EquipmentComponent));
+})(EquipmentComponent));
 
 export default connected;
