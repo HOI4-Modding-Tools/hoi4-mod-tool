@@ -78,7 +78,7 @@ export default class Hoi4ModCreator extends EventEmitter {
 
     replaceEntity(mod: string, type: string, entity: any) {
         const activeMod: ModModel = this.mods[mod];
-        if(activeMod) {
+        if(activeMod && entity.name) {
             switch (type) {
                 case "equipment":
                     activeMod.equipment[entity.name] = EquipmentModel.from(entity);
@@ -104,12 +104,12 @@ export default class Hoi4ModCreator extends EventEmitter {
     private loadEquipmentDefinitions(directory: string) {
         let loadedDefinitions = {};
         for (const file of fs.readdirSync(directory)) {
-            const fileContent = fs.readFileSync(paths.join(directory, file), "utf8").split(os.EOL);
+            const fileContent = fs.readFileSync(paths.join(directory, file), "utf8").split(/\r?\n/);
             let mode: string[] = [];
-            let inProgressItem;
+            let inProgressItem = {};
             for (let i = 0; i < fileContent.length; i++) {
                 const trimmedLine = fileContent[i].trim().substr(0, fileContent[i].indexOf("#") === -1 ? undefined : fileContent[i].trim().indexOf("#"));
-                const tokenizedLine = trimmedLine.split(/\s+/);
+                const tokenizedLine = trimmedLine.split("=").map(token => token.trim());
                 if (i == 0) {
                     if (!trimmedLine.startsWith("equipments")) {
                         throw new Error("Equipment files must start with 'equipments = {' on the first line.");
@@ -120,7 +120,7 @@ export default class Hoi4ModCreator extends EventEmitter {
                 if (trimmedLine.length === 0) {
                     continue;
                 }
-                if (mode.length == 0 && tokenizedLine[1] === "=") {
+                if (mode.length == 0 && tokenizedLine[1] === "{") {
                     mode.push("equipment");
                     inProgressItem = {
                         name: tokenizedLine[0]
@@ -130,14 +130,14 @@ export default class Hoi4ModCreator extends EventEmitter {
                 if (mode.slice(-1)[0] === "equipment") {
                     switch (tokenizedLine[0]) {
                         case "is_archetype":
-                            if (tokenizedLine[2] === "yes") {
+                            if (tokenizedLine[1] === "yes") {
                                 inProgressItem.isArchetype = true;
                             } else {
                                 console.warn("is_archetype doesn't make sense with any value other than 'yes', so it's being skipped.");
                             }
                             break;
                         case "is_buildable":
-                            if (tokenizedLine[2] === "no") {
+                            if (tokenizedLine[1] === "no") {
                                 inProgressItem.isBuildable = false;
                             } else {
                                 console.warn("is_buildable doesn't make sense with any value other than 'no', so it's being skipped.");
@@ -145,10 +145,10 @@ export default class Hoi4ModCreator extends EventEmitter {
                             break;
                         case "type":
                             if (["infantry", "support", "artillery", "anti_tank", "anti_air", "motorized", "mechanized", "armor", "fighter", "cas", "naval_bomber", "interceptor", "suicide", "tactical_bomber", "strategic_bomber",
-                                "air_transport", "missile", "submarine", "screen_ship", "capital_ship", "carrier"].includes(tokenizedLine[2])) {
-                                inProgressItem.type = tokenizedLine[2];
+                                "air_transport", "missile", "submarine", "screen_ship", "capital_ship", "carrier"].includes(tokenizedLine[1].substring(1, tokenizedLine[1].length - 1))) {
+                                inProgressItem.type = tokenizedLine[1].substring(1, tokenizedLine[1].length - 1);
                             } else {
-                                console.warn("Internal type " + tokenizedLine[2] + " is not valid.");
+                                console.warn("Internal type " + tokenizedLine[1] + " is not valid.");
                             }
                             break;
                         case "upgrades":
@@ -157,8 +157,14 @@ export default class Hoi4ModCreator extends EventEmitter {
                         case "group_by":
                         case "archetype":
                         case "interface_category":
-                            inProgressItem[tokenizedLine[0].toCamelCase()] = tokenizedLine[2];
+                        case "parent":
+                            if(tokenizedLine[1].startsWith("\"") && tokenizedLine[1].endsWith("\"")) {
+                                tokenizedLine[1] = tokenizedLine[1].substring(1, tokenizedLine[1].length - 1);
+                            }
+                            inProgressItem[tokenizedLine[0].fromSnakeCaseToCamelCase()] = tokenizedLine[1];
                             break;
+                        case "priority":
+                        case "visual_level":
                         case "reliability":
                         case "build_cost_ic":
                         case "defense":
@@ -169,12 +175,13 @@ export default class Hoi4ModCreator extends EventEmitter {
                         case "soft_attack":
                         case "hard_attack":
                         case "air_attack":
-                            inProgressItem[tokenizedLine[0].toCamelCase()] = Number.parseFloat(tokenizedLine[2]);
+                            inProgressItem[tokenizedLine[0].fromSnakeCaseToCamelCase()] = Number.parseFloat(tokenizedLine[1]);
                             break;
                         case "ap_attack":
-                            inProgressItem.armorPenetration = Number.parseFloat(tokenizedLine[2]);
+                            inProgressItem.armorPenetration = Number.parseFloat(tokenizedLine[1]);
                             break;
                         case "resources":
+                            inProgressItem.resources = {};
                             mode.push("resources");
                             break;
                         case "}":
@@ -208,6 +215,9 @@ export default class Hoi4ModCreator extends EventEmitter {
                     switch (tokenizedLine[0]) {
                         case "}":
                             mode.pop();
+                            break;
+                        default:
+                            inProgressItem.resources[tokenizedLine[0]] = tokenizedLine[1];
                             break;
                     }
                     continue;
