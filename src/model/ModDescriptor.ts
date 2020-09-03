@@ -8,14 +8,16 @@ export default class ModDescriptor {
     public readonly replacePaths: string[];
     public readonly location: string;
     public readonly supportedVersion: string;
+    public readonly dependencies: string[];
 
-    constructor(name: string, version: string, tags: string[], replacePaths: string[], location: string, supportedVersion: string) {
+    constructor(name: string, version: string, tags: string[], replacePaths: string[], location: string, supportedVersion: string, dependencies: string[]) {
         this.name = name;
         this.version = version;
         this.tags = tags;
         this.replacePaths = replacePaths;
         this.location = location;
         this.supportedVersion = supportedVersion;
+        this.dependencies = dependencies;
     }
 
 
@@ -26,6 +28,7 @@ export default class ModDescriptor {
         let tags: string[] = [];
         let replacePaths: string[] = [];
         let supportedVersion:string;
+        let dependencies: string[] = [];
 
         let mode: string = "";
         for (const line of lines) {
@@ -40,6 +43,18 @@ export default class ModDescriptor {
                     continue;
                 }
                 tags.push(trimmedLime.substr(1, trimmedLime.length - 2));
+                continue;
+            }
+            if(mode === "dependencies") {
+                if(line.includes("}")) {
+                    mode = "";
+                    continue;
+                }
+                const trimmedLime = line.trim();
+                if(!trimmedLime.length) {
+                    continue;
+                }
+                dependencies.push(trimmedLime.substr(1, trimmedLime.length - 2));
                 continue;
             }
 
@@ -65,9 +80,12 @@ export default class ModDescriptor {
                 const tokenizedLine = line.split("=").map(token => token.trim());
                 supportedVersion = tokenizedLine[1];
                 continue;
+            } else if (line.includes("dependencies")) {
+                mode = "dependencies";
+                continue;
             }
         }
-        return new ModDescriptor(name, version, tags, replacePaths, directoryName, supportedVersion);
+        return new ModDescriptor(name, version, tags, replacePaths, directoryName, supportedVersion, dependencies);
     }
 
     public toParadoxFormat() {
@@ -80,10 +98,13 @@ export default class ModDescriptor {
         }).join(os.EOL) : "";
         const supportedVersionLine = this.supportedVersion ? util.format("supported_version=\"%s\"", this.supportedVersion) : "";
         const nameLine = util.format("name=\"%s\"", this.name);
+        const dependenciesLine = this.dependencies.length ? util.format("dependencies = {%s %s %s}", os.EOL,
+            this.dependencies.map(dependency => util.format("\t\"%s\"", dependency)).join(os.EOL), os.EOL) + os.EOL : "";
         return versionLine +
             tagsLine +
             replacePathsLine +
             supportedVersionLine  +
+            dependenciesLine +
             nameLine;
     }
 }
