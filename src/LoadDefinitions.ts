@@ -71,7 +71,7 @@ function parseEntitiesFromFileToType(fileLines:string[], entityConstructor: any)
             }
         }
         if(mode[mode.length - 1] === "resources") {
-            tempInstance.resources[tokenizedLine[0]] = tokenizedLine[1]l
+            tempInstance.resources[tokenizedLine[0]] = tokenizedLine[1];
         }
         //Special property handling?
         switch (tokenizedLine[0]) {
