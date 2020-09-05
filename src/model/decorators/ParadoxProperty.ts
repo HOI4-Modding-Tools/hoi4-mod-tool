@@ -22,13 +22,20 @@ export function getParadoxPropertyFormat(target: any, propertyKey: string) {
     if(typeof template === "function") {
         return template(target, propertyKey);
     } else if(template !== undefined) {
+        const paradoxPropertyMapping = getPropertyMappingByObjectName(target.constructor, propertyKey);
         let replacementValue;
-        switch (typeof target[propertyKey]) {
+        switch (paradoxPropertyMapping.objectPropertyType) {
             case "boolean":
                 replacementValue = target[propertyKey] ? "yes" : "no";
                 break;
             case "number":
                 replacementValue = target[propertyKey].toFixed(2);
+                if(replacementValue.endsWith(".00")) {
+                    replacementValue = replacementValue.substring(1, replacementValue.length - 3);
+                }
+                break;
+            case "InternalType":
+                replacementValue = target[propertyKey];
                 break;
             default:
                 replacementValue = util.format("\"%s\"", target[propertyKey]);
