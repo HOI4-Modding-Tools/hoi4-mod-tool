@@ -105,24 +105,30 @@ export default class Hoi4ModCreator extends EventEmitter {
         const modSnapshot = this.modStateSnapshots[mod.descriptor.name] || new ModModel(mod.descriptor, {}, {});
         if (!_.isEqual(mod, modSnapshot)) {
             const tempDirectoryRoot = paths.join(os.tmpdir(), "hoi4-tool", encodeURIComponent(mod.descriptor.name));
-            // @ts-ignore
-            fs.rmdirSync(tempDirectoryRoot, {
-                recursive: true
-            });
+            try {
+                // @ts-ignore
+                fs.rmdirSync(tempDirectoryRoot, {
+                    recursive: true
+                });
 
-            // @ts-ignore
-            fs.mkdirSync(tempDirectoryRoot, {
-                recursive: true
-            });
+                // @ts-ignore
+                fs.mkdirSync(tempDirectoryRoot, {
+                    recursive: true
+                });
 
-            fs.writeFileSync(paths.join(tempDirectoryRoot, "descriptor.mod"), mod.descriptor.toParadoxFormat());
+                fs.writeFileSync(paths.join(tempDirectoryRoot, "descriptor.mod"), mod.descriptor.toParadoxFormat());
 
-            this.saveEquipmentFiles(mod, modSnapshot, tempDirectoryRoot);
-            this.saveUnitFiles(mod, modSnapshot, tempDirectoryRoot);
+                this.saveEquipmentFiles(mod, modSnapshot, tempDirectoryRoot);
+                this.saveUnitFiles(mod, modSnapshot, tempDirectoryRoot);
 
-            ncp(tempDirectoryRoot, mod.descriptor.location);
-            this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion, mod.descriptor.dependencies),
-                {...mod.equipment}, {...mod.units});
+                ncp(tempDirectoryRoot, mod.descriptor.location);
+
+                this.cleanupDeletedFiles(mod, modSnapshot);
+                this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion, mod.descriptor.dependencies),
+                    {...mod.equipment}, {...mod.units});
+            } catch (e) {
+                fs.rmdirSync(tempDirectoryRoot);
+            }
         }
     }
 
@@ -131,11 +137,6 @@ export default class Hoi4ModCreator extends EventEmitter {
         fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units", "equipment"), {
             recursive: true
         });
-
-        const deletedEquipment = _.difference(Object.keys(modSnapshot.equipment), Object.keys(mod.equipment));
-        for (let deleted of deletedEquipment) {
-            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
-        }
 
         for (let equipment in mod.equipment) {
             const paradoxFormatted = mod.equipment[equipment].toParadoxFormat();
@@ -153,11 +154,7 @@ export default class Hoi4ModCreator extends EventEmitter {
             recursive: true
         });
 
-        const deletedUnits = _.difference(Object.keys(modSnapshot.units), Object.keys(mod.units));
-        for (let deleted of deletedUnits) {
-            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
-        }
-
+        // Copy all units to the temp directory
         for (let unit in mod.units) {
             const paradoxFormatted = mod.units[unit].toParadoxFormat();
 
@@ -165,6 +162,17 @@ export default class Hoi4ModCreator extends EventEmitter {
             fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", unit + ".txt"), paradoxFormatted, {
                 "encoding": "utf8"
             });
+        }
+    }
+
+    private cleanupDeletedFiles(mod: ModModel, modSnapshot: ModModel) {
+        const deletedUnits = _.difference(Object.keys(modSnapshot.units || {}), Object.keys(mod.units || {}));
+        for (let deleted of deletedUnits) {
+            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
+        }
+        const deletedEquipment = _.difference(Object.keys(modSnapshot.equipment), Object.keys(mod.equipment));
+        for (let deleted of deletedEquipment) {
+            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
         }
     }
 
