@@ -63,15 +63,10 @@ app.on('ready', function () {
             case "SaveEntity":
                 engine.replaceEntity(action.mod, action.category, action.entity);
                 break;
+            case "SaveDescriptor":
+                engine.updateDescriptor(action.mod, action.descriptor);
+                break;
         }
-    });
-
-    engine.on("modUpdated", function(){
-        const mods = engine.getMods();
-        mainWindow.webContents.send("message", {
-            type: "UpdateAvailableMods",
-            mods
-        });
     });
 });
 

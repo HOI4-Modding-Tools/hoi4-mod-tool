@@ -11,6 +11,7 @@ import {withStyles} from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import EntityListComponent from "./EntityListComponent";
 import UnitComponent from "./entities/UnitComponent";
+import ModDefinitionComponent from "./entities/ModDefinitionComponent";
 
 export class ModComponent extends React.Component {
     constructor(props) {
@@ -24,7 +25,6 @@ export class ModComponent extends React.Component {
 
     render() {
         const {classes, modName} = this.props;
-        console.log(modName + " " + this.props.match.equipment);
         return (
             <React.Fragment>
                 <CssBaseline/>
@@ -32,7 +32,7 @@ export class ModComponent extends React.Component {
                     <nav>
                         <Drawer variant="permanent" classes={{paper: classes.drawerPaper}}>
                             <List component="nav">
-                                <ListItem>
+                                <ListItem button onClick={this.routeToUrl("/mod/" + modName)}>
                                     <ListItemText primary={modName}/>
                                 </ListItem>
                                 <ListItem button onClick={this.routeToUrl("/")}>
@@ -49,11 +49,14 @@ export class ModComponent extends React.Component {
                         </Drawer>
                     </nav>
                     <main className={classes.content}>
+                        <Route exact path="/mod/:modName">
+                            <ModDefinitionComponent mod={modName}/>
+                        </Route>
                         <Route path="/mod/:modName/equipment/:equipment?">
-                            <EquipmentComponent mod={modName} item={this.props.match.equipment}></EquipmentComponent>
+                            <EquipmentComponent mod={modName} item={this.props.match.equipment}/>
                         </Route>
                         <Route path="/mod/:modName/units/:unit?">
-                            <UnitComponent mod={modName} item={this.props.match.unit}></UnitComponent>
+                            <UnitComponent mod={modName} item={this.props.match.unit}/>
                         </Route>
                     </main>
                 </div>

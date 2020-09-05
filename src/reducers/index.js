@@ -1,5 +1,6 @@
 import {combineReducers} from "redux";
 import { ipcRenderer } from "electron";
+import * as _ from "lodash";
 
 const stateReducers = combineReducers({
     mods: function (state, action) {
@@ -7,7 +8,7 @@ const stateReducers = combineReducers({
             return {};
         }
         if (action.type === "UpdateAvailableMods") {
-            return action.mods;
+            return {...action.mods};
         }
         return state;
     },
@@ -20,11 +21,15 @@ const stateReducers = combineReducers({
 });
 
 export default function (state, action) {
-    state = stateReducers(state, action);
+    state = _.cloneDeep(stateReducers(state, action));
     switch (action.type) {
         case "SaveEntity":
         case "DeleteEntity":
+        case "SaveDescriptor":
             ipcRenderer.send("message", JSON.stringify(action));
+            break;
+        case "UpdateDescriptor":
+            state.mods[action.mod]._descriptor = action.descriptor;
             break;
     }
     return state;
