@@ -3,6 +3,7 @@ import * as paths from "path";
 import * as os from "os";
 import * as ncp from "ncp";
 import * as _ from "lodash";
+import * as util from "util";
 import ModDescriptor from "./model/ModDescriptor";
 import ModModel from "./model/ModModel";
 import EquipmentModel from "./model/EquipmentModel";
@@ -101,18 +102,23 @@ export default class Hoi4ModCreator extends EventEmitter {
         }
     }
 
-    private saveModFiles(mod: ModModel) {
+    updateDescriptor(mod: string, descriptor: any) {
+        this.mods[mod].descriptor = new ModDescriptor(descriptor.name, descriptor.version, descriptor.tags, descriptor.replacePaths, descriptor.location, descriptor.supportedVersion, descriptor.dependencies);
+        this.emit("modUpdated", this.mods[mod]);
+    }
+
+    private async saveModFiles(mod: ModModel) {
         const modSnapshot = this.modStateSnapshots[mod.descriptor.name] || new ModModel(mod.descriptor, {}, {});
         if (!_.isEqual(mod, modSnapshot)) {
             const tempDirectoryRoot = paths.join(os.tmpdir(), "hoi4-tool", encodeURIComponent(mod.descriptor.name));
             try {
                 // @ts-ignore
-                fs.rmdirSync(tempDirectoryRoot, {
+                await util.promisify(fs.rmdir)(tempDirectoryRoot, {
                     recursive: true
                 });
 
                 // @ts-ignore
-                fs.mkdirSync(tempDirectoryRoot, {
+                await util.promisify(fs.mkdir)(tempDirectoryRoot, {
                     recursive: true
                 });
 
@@ -121,11 +127,20 @@ export default class Hoi4ModCreator extends EventEmitter {
                 this.saveEquipmentFiles(mod, modSnapshot, tempDirectoryRoot);
                 this.saveUnitFiles(mod, modSnapshot, tempDirectoryRoot);
 
-                ncp(tempDirectoryRoot, mod.descriptor.location);
+                ncp(tempDirectoryRoot, mod.descriptor.location, {
+                    clobber: true
+                }, (err) => {
+                    if(!err) {
+                        this.cleanupDeletedFiles(mod, modSnapshot);
+                        this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion, mod.descriptor.dependencies),
+                            {...mod.equipment}, {...mod.units});
+                        fs.rmdirSync(tempDirectoryRoot, {
+                            recursive: true
+                        });
+                    }
+                });
 
-                this.cleanupDeletedFiles(mod, modSnapshot);
-                this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion, mod.descriptor.dependencies),
-                    {...mod.equipment}, {...mod.units});
+
             } catch (e) {
                 fs.rmdirSync(tempDirectoryRoot);
             }
