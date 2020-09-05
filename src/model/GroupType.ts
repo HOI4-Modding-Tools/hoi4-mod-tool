@@ -1,0 +1,1 @@
+export type GroupType = "infantry" | "support" | "mobile" | "armor";
