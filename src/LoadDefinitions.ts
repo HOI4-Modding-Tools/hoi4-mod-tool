@@ -12,38 +12,52 @@ export default function LoadDefinitions(directory: string, existingDefinitions?:
         if(fileStats.isDirectory()) {
             _.merge(existingDefinitions, LoadDefinitions(path.join(directory, fileName)));
         } else {
-            _.merge(existingDefinitions, readFile(path.join(directory, fileName));
+            _.merge(existingDefinitions, readFileAndLoadEntities(path.join(directory, fileName)));
         }
 
     }
     return existingDefinitions;
 }
 
-function readFile(filePath: string): any {
+function readFileAndLoadEntities(filePath: string): any {
     const fileContents:string[] = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
-
+    const entities = {};
+    let category;
+    let loadedEntity;
     if(fileContents[0].startsWith("equipments")) {
         // Parse as equipment file
-        parseFileIntoType(fileContents.slice(1), EquipmentModel);
+        category = "equipment";
+        loadedEntity = parseFileIntoType(fileContents.slice(1), EquipmentModel);
     } else if(fileContents[0].startsWith("sub_units")) {
         // Parse as unit file
-        parseFileIntoType(fileContents.slice(1), UnitModel);
+        category = "units";
+        loadedEntity = parseFileIntoType(fileContents.slice(1), UnitModel);
+    }
+    if(loadedEntity) {
+        entities[category] = {
+            [loadedEntity.name]: loadedEntity
+        }
+        return entities;
+    } else {
+        return {};
     }
 }
 
 function parseFileIntoType(fileLines:string[], entityConstructor: any) {
     // Iterate each line in the file.
     let tempInstance: {[property:string]: any} = {};
+    let mode:string[] = [];
     fileLines.forEach((line:string, index:number) => {
         const tokenizedLine = line.split("=").map(token => token.trim());
         if(index == 0) {
             tempInstance.name = tokenizedLine[0];
             return;
         }
-        if(tokenizedLine[0] === "}") {
+        if(tokenizedLine[0] === "}" && mode.length == 0) {
             return;
         }
         const objectProperty = getPropertyMappingByParadoxName(entityConstructor, tokenizedLine[0]);
+        //Special property handling?
         let propertyValue:any;
         switch (objectProperty.objectPropertyType) {
             case "number":
@@ -52,11 +66,16 @@ function parseFileIntoType(fileLines:string[], entityConstructor: any) {
             case "boolean":
                 propertyValue = tokenizedLine[1] === "yes";
                 break;
-            default:
+            case "string":
+                propertyValue = tokenizedLine[1].substring(1, tokenizedLine[1].length - 1);
+                break;
+            case "InternalType":
                 propertyValue = tokenizedLine[1];
                 break;
+            default:
+                throw new Error("Didn't understand " + objectProperty.objectPropertyType);
         }
         tempInstance[objectProperty.objectPropertyName] = propertyValue;
     });
-    return entityConstructor.From(tempInstance);
+    return entityConstructor.from(tempInstance);
 }
