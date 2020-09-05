@@ -23,41 +23,63 @@ function readFileAndLoadEntities(filePath: string): any {
     const fileContents:string[] = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
     const entities = {};
     let category;
-    let loadedEntity;
+    let loadedEntities;
     if(fileContents[0].startsWith("equipments")) {
         // Parse as equipment file
         category = "equipment";
-        loadedEntity = parseFileIntoType(fileContents.slice(1), EquipmentModel);
+        loadedEntities = parseEntitiesFromFileToType(fileContents.slice(1), EquipmentModel);
     } else if(fileContents[0].startsWith("sub_units")) {
         // Parse as unit file
         category = "units";
-        loadedEntity = parseFileIntoType(fileContents.slice(1), UnitModel);
+        loadedEntities = parseEntitiesFromFileToType(fileContents.slice(1), UnitModel);
     }
-    if(loadedEntity) {
-        entities[category] = {
-            [loadedEntity.name]: loadedEntity
-        }
+    if(loadedEntities) {
+        entities[category] = loadedEntities;
         return entities;
     } else {
         return {};
     }
 }
 
-function parseFileIntoType(fileLines:string[], entityConstructor: any) {
+function parseEntitiesFromFileToType(fileLines:string[], entityConstructor: any) {
     // Iterate each line in the file.
     let tempInstance: {[property:string]: any} = {};
+    const entities:{[property:string]: any} =  {};
     let mode:string[] = [];
     fileLines.forEach((line:string, index:number) => {
-        const tokenizedLine = line.split("=").map(token => token.trim());
-        if(index == 0) {
-            tempInstance.name = tokenizedLine[0];
+        // Discard comments
+        line = line.indexOf("#") !== -1 ? line.substring(0, line.indexOf("#")) : line;
+        // Discard empty lines
+        if(!line.trim().length) {
             return;
         }
-        if(tokenizedLine[0] === "}" && mode.length == 0) {
+        const tokenizedLine = line.split("=").map(token => token.trim());
+        if(tokenizedLine[1] === "{" && !mode.length) {
+            tempInstance = {
+                name: tokenizedLine[0]
+            };
+            mode.push("entity");
             return;
+        }
+        if(tokenizedLine[0] === "}" ) {
+            if(mode[0] == "entity") {
+                entities[tempInstance.name] = entityConstructor.from(tempInstance);
+                mode.pop();
+                return;
+            } else if (!mode.length) {
+                return;
+            }
+        }
+        if(mode[mode.length - 1] === "resources") {
+            tempInstance.resources[tokenizedLine[0]] = tokenizedLine[1]l
+        }
+        //Special property handling?
+        switch (tokenizedLine[0]) {
+            case "resources":
+                mode.push(tokenizedLine[0]);
+                return;
         }
         const objectProperty = getPropertyMappingByParadoxName(entityConstructor, tokenizedLine[0]);
-        //Special property handling?
         let propertyValue:any;
         switch (objectProperty.objectPropertyType) {
             case "number":
@@ -77,5 +99,5 @@ function parseFileIntoType(fileLines:string[], entityConstructor: any) {
         }
         tempInstance[objectProperty.objectPropertyName] = propertyValue;
     });
-    return entityConstructor.from(tempInstance);
+    return entities;
 }
