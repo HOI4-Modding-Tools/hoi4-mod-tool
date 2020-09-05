@@ -6,11 +6,11 @@ import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
 import {Route, withRouter} from "react-router-dom";
 import Drawer from "@material-ui/core/Drawer";
-import EquipmentComponent from "./EquipmentComponent";
+import EquipmentComponent from "./entities/EquipmentComponent";
 import {withStyles} from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import EntityListComponent from "./EntityListComponent";
-import UnitComponent from "./UnitComponent";
+import UnitComponent from "./entities/UnitComponent";
 
 export class ModComponent extends React.Component {
     constructor(props) {
@@ -42,12 +42,18 @@ export class ModComponent extends React.Component {
                                 <EntityListComponent entityCategory="equipment" label="Equipment"
                                                      mod={this.props.modName}></EntityListComponent>
                                 <Divider/>
+                                <EntityListComponent entityCategory="units" label="Units"
+                                                     mod={this.props.modName}></EntityListComponent>
+                                <Divider/>
                             </List>
                         </Drawer>
                     </nav>
                     <main className={classes.content}>
                         <Route path="/mod/:modName/equipment/:equipment?">
                             <EquipmentComponent mod={modName} item={this.props.match.equipment}></EquipmentComponent>
+                        </Route>
+                        <Route path="/mod/:modName/units/:unit?">
+                            <UnitComponent mod={modName} item={this.props.match.unit}></UnitComponent>
                         </Route>
                     </main>
                 </div>

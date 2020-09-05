@@ -9,6 +9,7 @@ import Collapse from "@material-ui/core/Collapse";
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import { withRouter } from "react-router";
+import * as _ from "lodash";
 
 export class EntityListComponent extends React.Component {
     constructor(props) {
@@ -63,7 +64,7 @@ export class EntityListComponent extends React.Component {
 }
 
 const connected = connect((state, ownProps) => {
-    const items = state.mods[ownProps.mod] ? state.mods[ownProps.mod]["_" + ownProps.entityCategory] : {};
+    const items = _.get(state, ["mods", ownProps.mod, "_" + ownProps.entityCategory], {});
     return {
         label: ownProps.label,
         mod: state.mods[ownProps.mod],

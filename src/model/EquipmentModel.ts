@@ -1,56 +1,58 @@
 import {InternalType} from "./InternalTypes";
 import ModEntityModel from "./ModEntityModel";
 import * as util from "util";
-import {getParadoxPropertyFormat, HasParadoxPropertyFormat} from "./decorators/HasParadoxPropertyFormat";
+import {ParadoxProperty} from "./decorators/ParadoxProperty";
 import * as os from "os";
 import * as _ from "lodash";
+import {ParadoxEntity} from "./decorators/ParadoxEntity";
 
+@ParadoxEntity("equipments")
 export default class EquipmentModel extends ModEntityModel {
-    private name: string;
-    @HasParadoxPropertyFormat("year")
+    public name: string;
+    @ParadoxProperty("year", "number")
     private year: number;
-    @HasParadoxPropertyFormat("picture")
+    @ParadoxProperty("picture", "string")
     private picture: string;
-    @HasParadoxPropertyFormat("is_archetype")
+    @ParadoxProperty("is_archetype", "boolean")
     private isArchetype: boolean;
-    @HasParadoxPropertyFormat("archetype")
+    @ParadoxProperty("archetype", "string")
     private archetype: string;
-    @HasParadoxPropertyFormat("is_buildable")
-    private isBuildable: boolean = false;
+    @ParadoxProperty("is_buildable", "boolean")
+    private isBuildable: boolean;
     /**
      * If this equipment can be built without requiring unlocking with a technology.
      */
-    @HasParadoxPropertyFormat("active")
+    @ParadoxProperty("active", "boolean")
     private active: boolean;
-    @HasParadoxPropertyFormat("type")
+    @ParadoxProperty("type", "InternalType")
     private type: InternalType;
-    @HasParadoxPropertyFormat("group_by")
+    @ParadoxProperty("group_by", "string")
     private groupBy: string;
-    @HasParadoxPropertyFormat('interface_category')
+    @ParadoxProperty('interface_category', "string")
     private interfaceCategory: string;
-    @HasParadoxPropertyFormat("parent")
+    @ParadoxProperty("parent", "string")
     private parent: string;
-    @HasParadoxPropertyFormat("priority")
+    @ParadoxProperty("priority", "string")
     private priority: string;
-    @HasParadoxPropertyFormat("visual_level")
+    @ParadoxProperty("visual_level", "string")
     private visualLevel: string;
 
     /**
      * Costs
      */
-    //@HasParadoxPropertyFormat("lend_lease_cost")
+    @ParadoxProperty("lend_lease_cost", "number")
     private lendLeaseCost: number;
     /**
      * How much factory output used to produce.
      */
-    //@HasParadoxPropertyFormat("build_cost_ic")
+    @ParadoxProperty("build_cost_ic", "number")
     private buildCostIc: number;
     /**
      *
      */
-    //@HasParadoxPropertyFormat("manpower")
+    @ParadoxProperty("manpower", "number")
     private manpower: number;
-    @HasParadoxPropertyFormat("resources",(target: any)=>{
+    @ParadoxProperty("resources", "map",(target: any)=>{
         if(_.isEmpty(target.resources)) {
             return "";
         }
@@ -62,38 +64,38 @@ export default class EquipmentModel extends ModEntityModel {
     })
     private resources: Map<string, number> = new Map<string, number>();
 
-    @HasParadoxPropertyFormat("max_organization")
+    @ParadoxProperty("max_organization", "number")
     private maxOrganization: number;
-    @HasParadoxPropertyFormat("reliability")
+    @ParadoxProperty("reliability", "number")
     private reliability: number;
-    @HasParadoxPropertyFormat("weight")
+    @ParadoxProperty("weight", "number")
     private weight: number;
-    @HasParadoxPropertyFormat("maximum_speed")
+    @ParadoxProperty("maximum_speed", "number")
     private maximumSpeed: number = 4;
-    @HasParadoxPropertyFormat("supply_consumption")
+    @ParadoxProperty("supply_consumption", "number")
     private supplyConsumption: number;
-    @HasParadoxPropertyFormat("default_morale")
+    @ParadoxProperty("default_morale", "number")
     private defaultMorale: number;
     /**
      * Defensive values
      */
-    @HasParadoxPropertyFormat("defense")
+    @ParadoxProperty("defense", "number")
     private defense: number;
-    @HasParadoxPropertyFormat("breakthrough")
+    @ParadoxProperty("breakthrough", "number")
     private breakthrough: number;
-    @HasParadoxPropertyFormat("armor")
+    @ParadoxProperty("armor", "number")
     private armor: number;
 
     /**
      * Offensive values
      */
-    @HasParadoxPropertyFormat("soft_attack")
+    @ParadoxProperty("soft_attack", "number")
     private softAttack: number;
-    @HasParadoxPropertyFormat("hard_attack")
+    @ParadoxProperty("hard_attack", "number")
     private hardAttack: number;
-    @HasParadoxPropertyFormat("ap_attack")
+    @ParadoxProperty("ap_attack", "number")
     private armorPenetration: number;
-    @HasParadoxPropertyFormat("air_attack")
+    @ParadoxProperty("air_attack", "number")
     private airAttack: number;
 
     public readonly localization_name: string;
@@ -109,21 +111,5 @@ export default class EquipmentModel extends ModEntityModel {
 
     static from(input: object) {
         return new EquipmentModel(input);
-    }
-
-    toParadoxFormat(): string {
-        let outputString = "";
-        for(const property in this) {
-            const paradoxPropertyFormat = getParadoxPropertyFormat(this, property)
-            if(paradoxPropertyFormat) {
-                outputString += "\t\t" + paradoxPropertyFormat + os.EOL;
-            }
-        }
-
-        return "equipments = {" + os.EOL +
-           "\t" + this.name + " = {" + os.EOL +
-            outputString +
-                "\t}" + os.EOL +
-            "}";
     }
 }

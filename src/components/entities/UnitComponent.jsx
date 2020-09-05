@@ -2,6 +2,7 @@ import {connect} from 'react-redux';
 import React from "react";
 import { withRouter } from "react-router-dom";
 import EntityEditComponent from "./EntityEditComponent";
+import * as _ from "lodash";
 
 export class EquipmentComponent extends EntityEditComponent {
     constructor(props) {
@@ -19,74 +20,97 @@ export class EquipmentComponent extends EntityEditComponent {
                 helperText: "Must be a string containing no whitespace.",
                 required: true
             },
-            isArchetype: {
-                type: "boolean",
-                label: "Is Archetype"
-            },
-            archetype: {
+            mapIconCategory: {
                 type: "text",
-                label: "Archetype",
-                enabledWhen: () => {
-                    return !this.props.equipment.isArchetype
-                },
-                helperText: "The archetype this equipment derives from."
+                label: "Map Icon Category"
             },
-            isBuildable: {
-                type: "boolean",
-                label: "Is Buildable",
-                helperText: "If this equipment is buildable"
+            iconPriority: {
+                type: "text",
+                label:"Priority",
+                helperText: "Determines icon to use with multiple subunits together."
+            },
+            aiIconPriority: {
+                type: "text",
+                label: "AI Priority"
             },
             active: {
                 type: "boolean",
                 label: "Active",
-                helperText: "If this equipment is automatically available to build; use false if it is unlocked via a technology."
+                helperText:"If the unit is automatically unlocked; false means it is unlocked by a technology."
+            },
+            isCavalry: {
+                type: "boolean",
+                label: "Is Cavalry",
+                helperText: "Is this a cavalry unit?"
+            },
+            isSpecialForces: {
+                type: "boolean",
+                label: "Is Special Forces",
+                helperText: "Is this a special forces unit?"
+            },
+            isMarines: {
+                type: "boolean",
+                label: "Is Marines",
+                helperText: "Is this a marine unit?"
+            },
+            isMountaineers: {
+                type: "boolean",
+                label: "Is Mountaineer",
+                helperText: "Is this a mountaineer unit?"
+            },
+            canBeParachuted: {
+                type: "boolean",
+                label: "Can Parachute",
+                helperText: "Is this a unit that can parachute?"
+            },
+            transportEquipmentName: {
+                type: "string",
+                label: "Transport Equipment",
+                helperText: "Name of equipment to determine unit speed"
+            },
+            group: {
+                type: "select",
+                label: "Group",
+                helperText: "Which tab the unit is organized into. Infantry, Support, Mobile, etc.",
+                options: [
+                    "infantry",
+                    "support",
+                    "mobile",
+                    "armor"
+                ]
             },
             type: {
                 type: "select",
-                label: "Type",
-                options: ["infantry", "support", "artillery", "anti_tank", "anti_air", "motorized", "mechanized", "armor", "fighter", "cas", "naval_bomber", "interceptor", "suicide", "tactical_bomber", "strategic_bomber",
-                    "air_transport", "missile", "submarine", "screen_ship", "capital_ship", "carrier"],
-                helperText: "What type of unit this equipment is for."
+                label: "Unit Types",
+                helperText: "The types of the unit.",
+                options: [
+                    "infantry",
+                    "support",
+                    "artillery",
+                    "anti_tank",
+                    "armor",
+                    "fighter",
+                    "cas",
+                    "naval_bomber",
+                    "interceptor",
+                    "suicide",
+                    "tactical_bomber",
+                    "strategic_bomber",
+                    "air_transport",
+                    "missile",
+                    "submarine",
+                    "screen_ship",
+                    "capital_ship",
+                    "carrier"
+                ]
             },
-            groupBy: {
-                type: "select",
-                label: "Group By",
-                options: ["archetype", "type"],
-                helperText: "How the equipment is grouped in the production screen."
+            essentialEquipment: {
+                type: "map[string, number]",
+                label: "Essential Equipment",
             },
-            interfaceCategory: {
-                type: "select",
-                label: "Interface Category",
-                options: ["interface_category_land", "interface_category_armor", "interface_category_capital_ships", "interface_category_screen_ships", "interface_category_other_ships", "interface_category_air"],
-                helperText: "Which production screen category the equipment appears in"
-            },
-            parent: {
-                type: "text",
-                label: "Parent",
-                helperText: "The equipment this equipment supercedes."
-            },
-            priority: {
-                type: "number",
-                label: "Priority"
-            },
-            lendLeaseCost: {
-                type: "number",
-                label: "Lend-Lease Cost"
-            },
-            buildCostId: {
-                type: "number",
-                label: "Build Cost IC",
-                helperText: "How much factory output is used."
-            },
-            manpower: {
-                type: "number",
-                label: "Manpower",
-                helperText: "Manpower used to build"
-            },
-            resources: {
-                type: "map",
-                label: "Resources",
-                helperText: "The resources used to build"
+            neededEquipment: {
+                type: "map[string, number]",
+                label: "Needed Equipment"
             },
             maxOrganization: {
                 type: "number",
@@ -94,67 +118,117 @@ export class EquipmentComponent extends EntityEditComponent {
             },
             reliability: {
                 type: "number",
-                label: "Reliability",
-                helperText: "Determines the difference"
+                label: "Reliability"
             },
             weight: {
                 type: "number",
                 label: "Weight",
-                helperText: "The number of transports required to carry."
+                helperText: "Amount of space taken up on transports."
             },
-            maximumSpeed: {
+            maximumSpeedMultiplier: {
                 type: "number",
-                label: "Max Speed",
-                helperText: "The base maximum speed of units using this equipment"
+                label: "Maximum Speed",
+                helperText: "A speed modifier this unit applies to the speed of their equipment."
             },
             supplyConsumption: {
                 type: "number",
                 label: "Supply Consumption",
-                helperText: "How much supply is consumed by units using this"
+                helperText: "Daily supply usage."
             },
             defaultMorale: {
                 type: "number",
-                label: "Default Morale",
-                helperText: "How much base morale units using this equipment have, affecting how much extra organization is gained outside of combat."
+                label: "Default Morale"
             },
-            defense: {
+            combatWidth: {
                 type: "number",
-                label: "Defense",
-                helperText: "How much defense is gained by units using this equipment."
+                label: "Combat Width"
             },
-            breakthrough: {
+            manpower: {
                 type: "number",
-                label: "Breakthrough",
-                helperText: "How much breakthrough is gained by units using this equipment."
+                label: "Manpower"
             },
-            armor: {
+            trainingTime: {
                 type: "number",
-                label: "Armor",
-                helperText: "If armor is higher than the enemy penetration, their"
+                label: "Training Time"
+            },
+            firepower: {
+                type: "number",
+                label:"Firepower"
             },
             softAttack: {
                 type: "number",
-                label: "Soft Attack",
-                helperText: "Number of attacks against targets with low hardness."
+                label: "Soft Attack"
             },
             hardAttack: {
                 type: "number",
-                label: "Hard Attack",
-                helperText: "Number of attacks against targets with high hardness."
-            },
-            armorPenetration: {
-                type: "number",
-                label: "Penetration",
-                helperText: "Ability to defeat enemy armor"
+                label: "Hard Attack"
             },
             airAttack: {
                 type: "number",
-                label: "Air Attack",
-                helperText: "Number of attacks against aircraft."
+                label: "Air Attack"
+            },
+            armorPiercing: {
+                type: "number",
+                label: "Armor Penetration"
+            },
+            breakthrough: {
+                type: "number",
+                label: "Breakthrough"
+            },
+            defense: {
+                type: "number",
+                label: "Defense"
+            },
+            maxStrength: {
+                type: "number",
+                label: "Max Strength"
+            },
+            armor: {
+                type: "number",
+                label: "Armor"
+            },
+            hardness: {
+                type: "number",
+                label: "Hardness"
+            },
+            entrenchmentModifier: {
+                type: "number",
+                label: "Entrenchment"
+            },
+            movement: {
+                type: "number",
+                label: "Movement"
+            },
+            experienceLossFactor: {
+                type: "number",
+                label: "Experience Loss Factor",
+                helperText: "Percentage of experience lost when replacing losses."
+            },
+            casualtyTrickleback: {
+                type: "number",
+                label: "Casualty Trickleback",
+                helperText: "Modifiers the amount of casualties recovered and returned to the manpower pool."
+            },
+            suppressionFactor: {
+                type: "number",
+                label: "Suppression Factor",
+                helperText: "Modifier to resistance suppression."
+            },
+            reliabilityFactor: {
+                type: "number",
+                label: "Reliability Factor",
+                helperText: "Modifier to equipment reliability of this unit."
+            },
+            recon: {
+                type: "number",
+                label: "Reconnaissance"
+            },
+            initiative: {
+                type: "number",
+                label: "Initiative"
             }
         }
     }
-
     static componentDidUpdate(props, state){
         if(state.item.name !== props.equipmentName) {
             return {
@@ -165,12 +239,12 @@ export class EquipmentComponent extends EntityEditComponent {
 }
 
 const connected = withRouter(connect((state, ownProps) => {
-    const unit = state.mods[decodeURIComponent(ownProps.match.params.modName)] ? state.mods[decodeURIComponent(ownProps.match.params.modName)]._units[ownProps.match.params.equipment] : {};
+    const entity = _.get(state, ["mods", ownProps.mod, "_" + ownProps.entityCategory], {});
     return {
         modName: decodeURIComponent(ownProps.match.params.modName),
         path: ownProps.match.params,
         equipmentName: ownProps.match.params.equipment,
-        unit
+        entity
     }
 }, (dispatch) => {
     return {
@@ -179,7 +253,7 @@ const connected = withRouter(connect((state, ownProps) => {
             dispatch({
                 type: "SaveEntity",
                 mod,
-                category: "equipment",
+                category: "unit",
                 entity
             });
         }
