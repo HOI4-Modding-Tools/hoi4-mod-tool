@@ -1,3 +1,4 @@
 interface String {
-    toCamelCase(): string
+    fromSnakeCaseToCamelCase(): string
+    fromCamelCaseToSnakeCase(): string
 }
