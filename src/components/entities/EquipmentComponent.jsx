@@ -158,12 +158,12 @@ export class EquipmentComponent extends EntityEditComponent {
 }
 
 const connected = withRouter(connect((state, ownProps) => {
-    const entity = _.get(state.mods, [decodeURIComponent(ownProps.match.params.modName), "_" + ownProps.match.params.category, ownProps.match.params.equipment], {})
+    const category = "equipment";
+    const entity = _.get(state, ["mods", ownProps.mod, "_" + category, ownProps.match.params[category]], {});
     return {
         modName: decodeURIComponent(ownProps.match.params.modName),
-        path: ownProps.match.params,
+        category,
         entity,
-        category: "equipment",
         entityName: entity.name || "new"
     }
 }, (dispatch, ownProps) => {

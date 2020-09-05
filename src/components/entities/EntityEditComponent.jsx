@@ -11,11 +11,24 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Button from "@material-ui/core/Button";
 
 export default class extends React.Component{
-    constructor(props) {
-        super(props);
+    validateProps(props){
+        if(props.modName === undefined) {
+            throw new Error("Missing required prop 'modName'");
+        }
         if(props.entity === undefined) {
             throw new Error("Missing required prop 'entity'");
         }
+        if(props.category === undefined) {
+            throw new Error("Missing required prop 'category'");
+        }
+        if(props.entityName === undefined) {
+            throw new Error("Missing required prop 'entityName'");
+        }
+    }
+
+    constructor(props) {
+        super(props);
+        this.validateProps(props);
         this.state = {
             fieldErrors: {}
         };
@@ -102,6 +115,18 @@ export default class extends React.Component{
                                         <FormHelperText>{field.helperText}</FormHelperText>
                                     </FormControl>
                                 </FormGroup>);
+                        case "map[number]":
+                            const existingValues = Object.keys(this.props.entity[fieldId]).map(property => {
+                                return(<FormGroup key={this.props.entityName + fieldId + property}>
+                                    <FormControl error={this.state.fieldErrors[fieldId][property]}>
+                                        <InputLabel>{property}</InputLabel>
+                                        <input value={this.props.entity[fieldId][property]}/>
+                                    </FormControl>
+                                </FormGroup>)
+                            });
+                            return (<FormGroup key={this.props.entityName + fieldId}>
+
+                            </FormGroup>);
                     }
                 })}
                 <Button onClick={this.saveEntity} color="primary" variant="contained" key="save-button">
