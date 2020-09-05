@@ -34,8 +34,8 @@ export default class EquipmentModel extends ModEntityModel {
     private parent: string;
     @ParadoxProperty("priority", "string")
     private priority: string;
-    @ParadoxProperty("visual_level", "string")
-    private visualLevel: string;
+    @ParadoxProperty("visual_level", "number")
+    private visualLevel: number;
 
     /**
      * Costs
