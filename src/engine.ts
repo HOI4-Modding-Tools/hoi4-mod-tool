@@ -6,7 +6,9 @@ import * as _ from "lodash";
 import ModDescriptor from "./model/ModDescriptor";
 import ModModel from "./model/ModModel";
 import EquipmentModel from "./model/EquipmentModel";
+import UnitModel from "./model/UnitModel";
 import {EventEmitter} from "events";
+import LoadDefinitions from "./LoadDefinitions";
 
 export default class Hoi4ModCreator extends EventEmitter {
     private readonly mods: { [index: string]: ModModel } = {};
@@ -51,17 +53,12 @@ export default class Hoi4ModCreator extends EventEmitter {
     }
 
     private loadLocalMod(directory: string) {
-        const filesInDirectory = fs.readdirSync(directory);
         let modDescriptor: ModDescriptor = this.processDescriptorFile(directory);
 
-        // Load existing equipment definitions
-        const equipmentDir = paths.join(directory, "common", "units", "equipment");
-        let equipment: { [index: string]: EquipmentModel } = {};
-        if (fs.existsSync(equipmentDir)) {
-            equipment = this.loadEquipmentDefinitions(equipmentDir);
-        }
-        this.mods[modDescriptor.name] = new ModModel(modDescriptor, equipment);
-        this.modStateSnapshots[modDescriptor.name] = new ModModel(modDescriptor, {...equipment});
+        const definitions = LoadDefinitions(directory);
+
+        this.mods[modDescriptor.name] = new ModModel(modDescriptor, definitions.equipment, definitions.units);
+        this.modStateSnapshots[modDescriptor.name] = new ModModel(modDescriptor, {...definitions.equipment}, {...definitions.units});
     }
 
     processDescriptorFile(directory) {
@@ -78,10 +75,13 @@ export default class Hoi4ModCreator extends EventEmitter {
 
     replaceEntity(mod: string, type: string, entity: any) {
         const activeMod: ModModel = this.mods[mod];
-        if(activeMod && entity.name) {
+        if (activeMod && entity.name) {
             switch (type) {
                 case "equipment":
                     activeMod.equipment[entity.name] = EquipmentModel.from(entity);
+                    break;
+                case "unit":
+                    activeMod.units[entity.name] = UnitModel.from(entity);
                     break;
                 default:
                     console.error("Entity type " + type + " not supported");
@@ -106,7 +106,7 @@ export default class Hoi4ModCreator extends EventEmitter {
         for (const file of fs.readdirSync(directory)) {
             const fileContent = fs.readFileSync(paths.join(directory, file), "utf8").split(/\r?\n/);
             let mode: string[] = [];
-            let inProgressItem = {};
+            let inProgressItem: { [index: string]: any } = {};
             for (let i = 0; i < fileContent.length; i++) {
                 const trimmedLine = fileContent[i].trim().substr(0, fileContent[i].indexOf("#") === -1 ? undefined : fileContent[i].trim().indexOf("#"));
                 const tokenizedLine = trimmedLine.split("=").map(token => token.trim());
@@ -158,7 +158,7 @@ export default class Hoi4ModCreator extends EventEmitter {
                         case "archetype":
                         case "interface_category":
                         case "parent":
-                            if(tokenizedLine[1].startsWith("\"") && tokenizedLine[1].endsWith("\"")) {
+                            if (tokenizedLine[1].startsWith("\"") && tokenizedLine[1].endsWith("\"")) {
                                 tokenizedLine[1] = tokenizedLine[1].substring(1, tokenizedLine[1].length - 1);
                             }
                             inProgressItem[tokenizedLine[0].fromSnakeCaseToCamelCase()] = tokenizedLine[1];
@@ -228,7 +228,7 @@ export default class Hoi4ModCreator extends EventEmitter {
     }
 
     private saveModFiles(mod: ModModel) {
-        const modSnapshot = this.modStateSnapshots[mod.descriptor.name] || new ModModel(mod.descriptor, {});
+        const modSnapshot = this.modStateSnapshots[mod.descriptor.name] || new ModModel(mod.descriptor, {}, {});
         if (!_.isEqual(mod, modSnapshot)) {
             const tempDirectoryRoot = paths.join(os.tmpdir(), "hoi4-tool", encodeURIComponent(mod.descriptor.name));
             // @ts-ignore
@@ -243,27 +243,54 @@ export default class Hoi4ModCreator extends EventEmitter {
 
             fs.writeFileSync(paths.join(tempDirectoryRoot, "descriptor.mod"), mod.descriptor.toParadoxFormat());
 
-            // @ts-ignore
-            fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units", "equipment"), {
-                recursive: true
-            });
+            this.saveEquipmentFiles(mod, modSnapshot, tempDirectoryRoot);
+            this.saveUnitFiles(mod, modSnapshot, tempDirectoryRoot);
 
-            const deletedEquipment = _.difference(Object.keys(modSnapshot.equipment), Object.keys(mod.equipment));
-            for(let deleted of deletedEquipment) {
-                fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
-            }
-
-            for (let equipment in mod.equipment) {
-                const paradoxFormatted = mod.equipment[equipment].toParadoxFormat();
-
-                // Write to temp directory
-                fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", equipment + ".txt"), paradoxFormatted, {
-                    "encoding": "utf8"
-                });
-            }
             ncp(tempDirectoryRoot, mod.descriptor.location);
-            this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion),
-                {...mod.equipment});
+            this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion, mod.descriptor.dependencies),
+                {...mod.equipment}, {...mod.units});
+        }
+    }
+
+    private saveEquipmentFiles(mod: ModModel, modSnapshot: ModModel, tempDirectoryRoot: string) {
+        // @ts-ignore
+        fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units", "equipment"), {
+            recursive: true
+        });
+
+        const deletedEquipment = _.difference(Object.keys(modSnapshot.equipment), Object.keys(mod.equipment));
+        for (let deleted of deletedEquipment) {
+            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
+        }
+
+        for (let equipment in mod.equipment) {
+            const paradoxFormatted = mod.equipment[equipment].toParadoxFormat();
+
+            // Write to temp directory
+            fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", equipment + ".txt"), paradoxFormatted, {
+                "encoding": "utf8"
+            });
+        }
+    }
+
+    private saveUnitFiles(mod: ModModel, modSnapshot: ModModel, tempDirectoryRoot: string) {
+        // @ts-ignore
+        fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units"), {
+            recursive: true
+        });
+
+        const deletedUnits = _.difference(Object.keys(modSnapshot.units), Object.keys(mod.units));
+        for (let deleted of deletedUnits) {
+            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
+        }
+
+        for (let unit in mod.units) {
+            const paradoxFormatted = mod.units[unit].toParadoxFormat();
+
+            // Write to temp directory
+            fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", unit + ".txt"), paradoxFormatted, {
+                "encoding": "utf8"
+            });
         }
     }
 
