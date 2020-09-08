@@ -3,7 +3,6 @@ import * as path from "path";
 import EquipmentModel from "./model/EquipmentModel";
 import UnitModel from "./model/UnitModel";
 import * as _ from "lodash";
-import ParadoxEntityProperty from "./model/ParadoxEntityProperty";
 import {getMappingForField, getParadoxTypeForfield, parseParadoxString} from "./model/decorators/ParadoxProperty";
 
 export default function LoadDefinitions(directory: string, existingDefinitions?: any): {[index:string] : any} {

@@ -15,6 +15,7 @@ import {
     getMappingForField,
     getParadoxTypeForfield
 } from "./model/decorators/ParadoxProperty";
+import ModEntityModel from "./model/ModEntityModel";
 
 export default class Hoi4ModCreator extends EventEmitter {
     private readonly mods: { [index: string]: ModModel } = {};
@@ -127,8 +128,8 @@ export default class Hoi4ModCreator extends EventEmitter {
 
             fs.writeFileSync(paths.join(tempDirectoryRoot, "descriptor.mod"), mod.descriptor.toParadoxFormat());
 
-            this.saveEquipmentFiles(mod, tempDirectoryRoot);
-            this.saveUnitFiles(mod, tempDirectoryRoot);
+            this.saveEntityFiles(mod.equipment, paths.join(tempDirectoryRoot, "common", "units", "equipment"));
+            this.saveEntityFiles(mod.units, paths.join(tempDirectoryRoot, "common", "units"));
 
             ncp(tempDirectoryRoot, mod.descriptor.location, {
                 clobber: true,
@@ -147,18 +148,18 @@ export default class Hoi4ModCreator extends EventEmitter {
         }
     }
 
-    private saveEquipmentFiles(mod: ModModel, tempDirectoryRoot: string) {
+    private saveEntityFiles(entities: { [name:string]: ModEntityModel }, directoryRoot: string) {
         // @ts-ignore
-        fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units", "equipment"), {
+        fs.mkdirSync(paths.join(directoryRoot, "common", "units", "equipment"), {
             recursive: true
         });
 
-        for (let equipment in mod.equipment) {
+        for (let entity in entities) {
             // If the item was loaded from a file, let's update that file.
-            const equipmentDef: EquipmentModel = mod.equipment[equipment];
+            const equipmentDef: ModEntityModel = entities[entity];
             if (equipmentDef.sourceFilePath) {
                 // Read the original file and update a temp copy
-                let fileContents: string[] = fs.readFileSync(mod.equipment[equipment].sourceFilePath, "utf8").split(/\r?\n/);
+                let fileContents: string[] = fs.readFileSync(entities[entity].sourceFilePath, "utf8").split(/\r?\n/);
                 // Find the lines where the entity starts and stops.
                 const entityStartLine: number = fileContents.findIndex(line => {
                     return line.trim().startsWith(equipmentDef.name);
@@ -173,13 +174,13 @@ export default class Hoi4ModCreator extends EventEmitter {
                     }
                     const leadingWhiteSpace = /^(\s*)/.exec(line)[1];
                     const tokenizedLine = line.split("=").map(token => token.trim());
-                    const fieldName = getMappingForField(tokenizedLine[0], mod.equipment[equipment].constructor);
-                    const value = mod.equipment[equipment][fieldName];
+                    const fieldName = getMappingForField(tokenizedLine[0], entities[entity].constructor);
+                    const value = entities[entity][fieldName];
                     if (value !== undefined) {
-                        replacedProperties.push(getMappingForField(tokenizedLine[0], mod.equipment[equipment].constructor));
-                        const lineMappings = mod.equipment[equipment].lineMappings;
+                        replacedProperties.push(getMappingForField(tokenizedLine[0], entities[entity].constructor));
+                        const lineMappings = entities[entity].lineMappings;
                         if (lineMappings[fieldName] == lineNumber) {
-                            const typeMapping = getParadoxTypeForfield(fieldName, mod.equipment[equipment].constructor);
+                            const typeMapping = getParadoxTypeForfield(fieldName, entities[entity].constructor);
                             const formattedValue = convertValueToParadoxString(equipmentDef[fieldName], typeMapping);
                             return leadingWhiteSpace + tokenizedLine[0] + " = " + formattedValue;
                         }
@@ -189,12 +190,12 @@ export default class Hoi4ModCreator extends EventEmitter {
                 });
                 // Insert new properties before the endLine
                 const linesToInsert = [];
-                for (const property in mod.equipment[equipment]) {
+                for (const property in entities[entity]) {
                     if (!replacedProperties.includes(property)) {
-                        const paradoxType = getParadoxTypeForfield(property, mod.equipment[equipment].constructor)
+                        const paradoxType = getParadoxTypeForfield(property, entities[entity].constructor)
                         if(paradoxType !== undefined) {
-                            const paradoxProperty = getMappingForField(property, mod.equipment[equipment].constructor);
-                            const value = mod.equipment[equipment][property];
+                            const paradoxProperty = getMappingForField(property, entities[entity].constructor);
+                            const value = entities[entity][property];
                             if (value !== undefined) {
                                 linesToInsert.push("\t\t" + paradoxProperty + " = " + convertValueToParadoxString(value, paradoxType));
                             }
@@ -205,29 +206,12 @@ export default class Hoi4ModCreator extends EventEmitter {
                     fileContents.splice(entityEndLine, 0, line);
                 }
 
-                fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", paths.basename(equipmentDef.sourceFilePath)), fileContents.join(os.EOL));
+                fs.writeFileSync(paths.join(directoryRoot, "common", "units", "equipment", paths.basename(equipmentDef.sourceFilePath)), fileContents.join(os.EOL));
             } else {
-                fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", equipment + ".txt"), equipmentDef.toParadoxFormat(), {
+                fs.writeFileSync(paths.join(directoryRoot, "common", "units", "equipment", entity + ".txt"), equipmentDef.toParadoxFormat(), {
                     encoding: "utf8"
                 });
             }
-        }
-    }
-
-    private saveUnitFiles(mod: ModModel, tempDirectoryRoot: string) {
-        // @ts-ignore
-        fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units"), {
-            recursive: true
-        });
-
-        // Copy all units to the temp directory
-        for (let unit in mod.units) {
-            const paradoxFormatted = mod.units[unit].toParadoxFormat();
-
-            // Write to temp directory
-            fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", unit + ".txt"), paradoxFormatted, {
-                "encoding": "utf8"
-            });
         }
     }
 

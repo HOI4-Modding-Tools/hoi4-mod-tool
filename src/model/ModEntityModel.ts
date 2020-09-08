@@ -1,6 +1,4 @@
 import * as os from "os";
-import * as util from "util";
-import ParadoxEntityProperty from "./ParadoxEntityProperty";
 import {getMappingForField} from "./decorators/ParadoxProperty";
 
 export default abstract class ModEntityModel {
@@ -46,15 +44,6 @@ export default abstract class ModEntityModel {
      * The path to the file where this file
      */
     abstract get sourceFilePath(): string;
-
-    public getObjectPropertyForParadoxProperty(propertyName: string): ParadoxEntityProperty<any> {
-        for (const field in this) {
-            const fieldValue = (this[field] as any) as ParadoxEntityProperty<any>;
-            if (fieldValue?.paradoxPropertyName == propertyName) {
-                return fieldValue;
-            }
-        }
-    }
 
     get lineMappings() {
         return this._lineMappings;

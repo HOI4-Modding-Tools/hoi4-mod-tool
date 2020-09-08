@@ -2,59 +2,101 @@
 import ModEntityModel from "./ModEntityModel";
 import {GroupType} from "./GroupType";
 import {ParadoxEntity} from "./decorators/ParadoxEntity";
-import ParadoxEntityProperty from "./ParadoxEntityProperty";
+import ParadoxProperty from "./decorators/ParadoxProperty";
 
 @ParadoxEntity("sub_units")
 export default class UnitModel extends ModEntityModel {
     public name: string;
     public sourceFilePath: string;
-    private mapIconCategory:ParadoxEntityProperty<string> =new ParadoxEntityProperty<string>(this, "map_icon_category", "string")
-    private iconPriority:ParadoxEntityProperty<string> =new ParadoxEntityProperty<string>(this, "priority", "number");
-    private aiIconPriority:ParadoxEntityProperty<string> =new ParadoxEntityProperty<string>(this, "ai_priority", "number");
-    private active:ParadoxEntityProperty<boolean> =new ParadoxEntityProperty<boolean>(this, "active", "boolean");
-    private isCavalry:ParadoxEntityProperty<boolean> =new ParadoxEntityProperty<boolean>(this, "cavalry", "boolean");
-    private isSpecialForces:ParadoxEntityProperty<boolean> =new ParadoxEntityProperty<boolean>(this, "cavalry", "boolean");
-    private isMarines:ParadoxEntityProperty<boolean> =new ParadoxEntityProperty<boolean>(this, "marines", "boolean");
-    private isMountaineers:ParadoxEntityProperty<boolean> =new ParadoxEntityProperty<boolean>(this, "mountaineers", "boolean");
-    private canBeParachuted:ParadoxEntityProperty<boolean> =new ParadoxEntityProperty<boolean>(this, "can_be_parachuted", "boolean");
-    private transportEquipmentName:ParadoxEntityProperty<string> =new ParadoxEntityProperty<string>(this, "transport", "string");
-    private group:ParadoxEntityProperty<GroupType> =new ParadoxEntityProperty<GroupType>(this, "group", "GroupType");
-    private types:ParadoxEntityProperty<string> =new ParadoxEntityProperty<string>(this, "type", "InternalType");
-    private categories:ParadoxEntityProperty<string[]> =new ParadoxEntityProperty<string[]>(this, "categories", "string[]");
-    private essentialEquipment:ParadoxEntityProperty<string[]> =new ParadoxEntityProperty<string[]>(this, "essential", "string[]");
-    private neededEquipment:ParadoxEntityProperty<string[]> =new ParadoxEntityProperty<string[]>(this, "essential", "string[]");
+    @ParadoxProperty("map_icon_category", "string")
+    private mapIconCategory:string;
+    @ParadoxProperty("priority", "number")
+    private iconPriority:string;
+    @ParadoxProperty("ai_priority", "number")
+    private aiIconPriority:string;
+    @ParadoxProperty("active", "boolean")
+    private active:boolean;
+    @ParadoxProperty("cavalry", "boolean")
+    private isCavalry:boolean;
+    @ParadoxProperty("cavalry", "boolean")
+    private isSpecialForces:boolean;
+    @ParadoxProperty("marines", "boolean")
+    private isMarines:boolean;
+    @ParadoxProperty("mountaineers", "boolean")
+    private isMountaineers:boolean;
+    @ParadoxProperty("can_be_parachuted", "boolean")
+    private canBeParachuted:boolean;
+    @ParadoxProperty("transport", "string")
+    private transportEquipmentName:string;
+    @ParadoxProperty("group", "GroupType")
+    private group:string;
+    @ParadoxProperty("type", "InternalType")
+    private types:string;
+    @ParadoxProperty("categories", "string[]")
+    private categories:string[];
+    @ParadoxProperty("essential", "string[]")
+    private essentialEquipment:string[];
+    @ParadoxProperty("essential", "string[]")
+    private neededEquipment:string[];
 
-    private maxOrganization:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "max_organization", "number");
-    private reliability:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "reliability", "number");
-    private weight:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "weight", "number");
-    private maximumSpeedMultiplier:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "maximum_speed", "number");
-    private supplyConsumption:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "supply_consumption", "number");
-    private defaultMorale:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "default_morale", "number");
-    private combatWidth:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "combat_width", "number");
+    @ParadoxProperty("max_organization", "number")
+    private maxOrganization:number;
+    @ParadoxProperty("reliability", "number")
+    private reliability:number;
+    @ParadoxProperty("weight", "number")
+    private weight:number;
+    @ParadoxProperty("maximum_speed", "number")
+    private maximumSpeedMultiplier:number;
+    @ParadoxProperty("supply_consumption", "number")
+    private supplyConsumption:number;
+    @ParadoxProperty("default_morale", "number")
+    private defaultMorale:number;
+    @ParadoxProperty("combat_width", "number")
+    private combatWidth:number;
 
-    private manpower:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "manpower", "number");
-    private trainingTime:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "training_time", "number");
+    @ParadoxProperty("manpower", "number")
+    private manpower:number;
+    @ParadoxProperty("training_time", "number")
+    private trainingTime:number;
 
-    private firepower:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "attack", "number");
-    private softAttack:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "soft_attack", "number");
-    private hardAttack:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "hard_attack", "number");
-    private airAttack:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "air_attack", "number");
-    private armorPiercing:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "ap_attack", "number");
-    private breakthrough:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "breakthrough", "number");
+    @ParadoxProperty("attack", "number")
+    private firepower:number;
+    @ParadoxProperty("soft_attack", "number")
+    private softAttack:number;
+    @ParadoxProperty("hard_attack", "number")
+    private hardAttack:number;
+    @ParadoxProperty("air_attack", "number")
+    private airAttack:number;
+    @ParadoxProperty("ap_attack", "number")
+    private armorPiercing:number;
+    @ParadoxProperty("breakthrough", "number")
+    private breakthrough:number;
 
-    private defense:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "defense", "number");
-    private maxStrength:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "max_strength", "number");
-    private armor:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "armor_value", "number");
-    private hardness:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "hardness", "number");
-    private entrenchmentModifier:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "entrenchment", "number");
+    @ParadoxProperty("defense", "number")
+    private defense:number;
+    @ParadoxProperty("max_strength", "number")
+    private maxStrength:number;
+    @ParadoxProperty("armor_value", "number")
+    private armor:number;
+    @ParadoxProperty("hardness", "number")
+    private hardness:number;
+    @ParadoxProperty("entrenchment", "number")
+    private entrenchmentModifier:number;
 
-    private movement:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "movement", "number");
-    private experienceLossFactor:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "experience_loss_factor", "number");
-    private casualtyTrickleback:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "casualty_trickleback", "number");
-    private suppressionFactor:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "suppression_factor", "number");
-    private reliabilityFactor:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "reliability_factor", "number");
-    private reconnaissance:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "recon", "number");
-    private initiative:ParadoxEntityProperty<number> =new ParadoxEntityProperty<number>(this, "initiative", "number");
+    @ParadoxProperty("movement", "number")
+    private movement:number;
+    @ParadoxProperty("experience_loss_factor", "number")
+    private experienceLossFactor:number;
+    @ParadoxProperty("casualty_trickleback", "number")
+    private casualtyTrickleback:number;
+    @ParadoxProperty("suppression_factor", "number")
+    private suppressionFactor:number;
+    @ParadoxProperty("reliability_factor", "number")
+    private reliabilityFactor:number;
+    @ParadoxProperty("recon", "number")
+    private reconnaissance:number;
+    @ParadoxProperty("initiative", "number")
+    private initiative:number;
 
     public readonly localization_name: string;
     public readonly localization_description:string;

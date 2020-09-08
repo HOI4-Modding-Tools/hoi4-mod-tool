@@ -1,6 +1,5 @@
 import ModEntityModel from "./ModEntityModel";
 import {ParadoxEntity} from "./decorators/ParadoxEntity";
-import ParadoxEntityProperty from "./ParadoxEntityProperty";
 import ParadoxProperty from "./decorators/ParadoxProperty";
 
 @ParadoxEntity("equipments")
