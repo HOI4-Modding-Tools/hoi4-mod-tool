@@ -28,4 +28,22 @@ export default class ModModel {
      get units() {
         return this._units;
      }
+
+     asSimpleObject() {
+        const object: {[property:string] : any} = {};
+        for(const property of ["_equipment", "_units"]) {
+            switch (typeof this[property]) {
+                case "object":
+                    object[property] = {};
+                    for(const objectProperty in this[property]) {
+                        object[property][objectProperty] = (<any>this[property][objectProperty]).asSimpleObject();
+                    }
+                    break;
+                default:
+                    object[property] = this[property];
+            }
+        }
+        object._descriptor = this._descriptor;
+        return object;
+     }
 }

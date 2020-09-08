@@ -4,7 +4,7 @@ const entityProperty = Symbol("ParadoxEntity")
 
 export function ParadoxEntity(categoryName: string){
     return (target) => {
-        Reflect.defineMetadata(entityProperty, categoryName, target);
+        Reflect.defineMetadata("ParadoxEntityCategory", categoryName, target);
     }
 
 }

@@ -79,10 +79,10 @@ export default class Hoi4ModCreator extends EventEmitter {
         if (activeMod && entity.name) {
             switch (type) {
                 case "equipment":
-                    activeMod.equipment[entity.name] = EquipmentModel.from(entity);
+                    activeMod.equipment[entity.name].updateFrom(entity);
                     break;
                 case "unit":
-                    activeMod.units[entity.name] = UnitModel.from(entity);
+                    activeMod.units[entity.name].updateFrom(entity);
                     break;
                 default:
                     console.error("Entity type " + type + " not supported");
@@ -108,62 +108,73 @@ export default class Hoi4ModCreator extends EventEmitter {
     }
 
     private async saveModFiles(mod: ModModel) {
-        const modSnapshot = this.modStateSnapshots[mod.descriptor.name] || new ModModel(mod.descriptor, {}, {});
-        if (!_.isEqual(mod, modSnapshot)) {
-            const tempDirectoryRoot = paths.join(os.tmpdir(), "hoi4-tool", encodeURIComponent(mod.descriptor.name));
-            try {
-                // @ts-ignore
-                await util.promisify(fs.rmdir)(tempDirectoryRoot, {
-                    recursive: true
-                });
+        const tempDirectoryRoot = paths.join(os.tmpdir(), "hoi4-tool", encodeURIComponent(mod.descriptor.name));
+        try {
+            // @ts-ignore
+            await util.promisify(fs.rmdir)(tempDirectoryRoot, {
+                recursive: true
+            });
 
-                // @ts-ignore
-                await util.promisify(fs.mkdir)(tempDirectoryRoot, {
-                    recursive: true
-                });
+            // @ts-ignore
+            await util.promisify(fs.mkdir)(tempDirectoryRoot, {
+                recursive: true
+            });
 
-                fs.writeFileSync(paths.join(tempDirectoryRoot, "descriptor.mod"), mod.descriptor.toParadoxFormat());
+            fs.writeFileSync(paths.join(tempDirectoryRoot, "descriptor.mod"), mod.descriptor.toParadoxFormat());
 
-                this.saveEquipmentFiles(mod, modSnapshot, tempDirectoryRoot);
-                this.saveUnitFiles(mod, modSnapshot, tempDirectoryRoot);
+            this.saveEquipmentFiles(mod, tempDirectoryRoot);
+            this.saveUnitFiles(mod, tempDirectoryRoot);
 
-                ncp(tempDirectoryRoot, mod.descriptor.location, {
-                    clobber: true
-                }, (err) => {
-                    if(!err) {
-                        this.cleanupDeletedFiles(mod, modSnapshot);
-                        this.modStateSnapshots[mod.descriptor.name] = new ModModel(new ModDescriptor(mod.descriptor.name, mod.descriptor.version, mod.descriptor.tags, mod.descriptor.replacePaths, mod.descriptor.location, mod.descriptor.supportedVersion, mod.descriptor.dependencies),
-                            {...mod.equipment}, {...mod.units});
-                        fs.rmdirSync(tempDirectoryRoot, {
-                            recursive: true
-                        });
-                    }
-                });
-
-
-            } catch (e) {
-                fs.rmdirSync(tempDirectoryRoot);
-            }
+            ncp(tempDirectoryRoot, mod.descriptor.location, {
+                clobber: true,
+                stopOnErr: true
+            }, (err) => {
+                if (!err) {
+                    this.cleanupDeletedFiles(mod);
+                }
+            });
+        } catch (e) {
+            console.error(e);
+            // @ts-ignore
+            fs.rmdirSync(tempDirectoryRoot, {
+                recursive: true
+            });
         }
     }
 
-    private saveEquipmentFiles(mod: ModModel, modSnapshot: ModModel, tempDirectoryRoot: string) {
+    private saveEquipmentFiles(mod: ModModel, tempDirectoryRoot: string) {
         // @ts-ignore
         fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units", "equipment"), {
             recursive: true
         });
 
         for (let equipment in mod.equipment) {
-            const paradoxFormatted = mod.equipment[equipment].toParadoxFormat();
-
-            // Write to temp directory
-            fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", equipment + ".txt"), paradoxFormatted, {
-                "encoding": "utf8"
-            });
+            // If the item was loaded from a file, let's update that file.
+            const equipmentDef: EquipmentModel = mod.equipment[equipment];
+            if (equipmentDef.sourceFilePath) {
+                // Read the original file and update a temp copy
+                let fileContents: string[] = fs.readFileSync(mod.equipment[equipment].sourceFilePath, "utf8").split(/\r?\n/);
+                fileContents = fileContents.map((line: string, lineNumber: number) => {
+                    const leadingWhiteSpace = /^(\s*)/.exec(line)[1];
+                    const tokenizedLine = line.split("=").map(token => token.trim());
+                    const objectProperty = mod.equipment[equipment].getObjectPropertyForParadoxProperty(tokenizedLine[0]);
+                    if (objectProperty !== undefined && lineNumber === objectProperty.line) {
+                        const formattedValue = objectProperty.toParadoxFormat();
+                        return leadingWhiteSpace + tokenizedLine[0] + " = " + formattedValue;
+                    } else {
+                        return line;
+                    }
+                });
+                fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", paths.basename(equipmentDef.sourceFilePath)), fileContents.join(os.EOL));
+            } else {
+                fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", equipment + ".txt"), equipmentDef.toParadoxFormat(), {
+                    encoding: "utf8"
+                });
+            }
         }
     }
 
-    private saveUnitFiles(mod: ModModel, modSnapshot: ModModel, tempDirectoryRoot: string) {
+    private saveUnitFiles(mod: ModModel, tempDirectoryRoot: string) {
         // @ts-ignore
         fs.mkdirSync(paths.join(tempDirectoryRoot, "common", "units"), {
             recursive: true
@@ -180,15 +191,15 @@ export default class Hoi4ModCreator extends EventEmitter {
         }
     }
 
-    private cleanupDeletedFiles(mod: ModModel, modSnapshot: ModModel) {
-        const deletedUnits = _.difference(Object.keys(modSnapshot.units || {}), Object.keys(mod.units || {}));
-        for (let deleted of deletedUnits) {
-            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
-        }
-        const deletedEquipment = _.difference(Object.keys(modSnapshot.equipment), Object.keys(mod.equipment));
-        for (let deleted of deletedEquipment) {
-            fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
-        }
+    private cleanupDeletedFiles(mod: ModModel) {
+        // const deletedUnits = _.difference(Object.keys(modSnapshot.units || {}), Object.keys(mod.units || {}));
+        // for (let deleted of deletedUnits) {
+        //     fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
+        // }
+        // const deletedEquipment = _.difference(Object.keys(modSnapshot.equipment), Object.keys(mod.equipment));
+        // for (let deleted of deletedEquipment) {
+        //     fs.unlinkSync(paths.join(mod.descriptor.location, "common", "units", "equipment", deleted + ".txt"));
+        // }
     }
 
     private saveConfigurationFile() {
