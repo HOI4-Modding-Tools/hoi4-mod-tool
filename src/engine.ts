@@ -10,6 +10,11 @@ import EquipmentModel from "./model/EquipmentModel";
 import UnitModel from "./model/UnitModel";
 import {EventEmitter} from "events";
 import LoadDefinitions from "./LoadDefinitions";
+import {
+    convertValueToParadoxString,
+    getMappingForField,
+    getParadoxTypeForfield
+} from "./model/decorators/ParadoxProperty";
 
 export default class Hoi4ModCreator extends EventEmitter {
     private readonly mods: { [index: string]: ModModel } = {};
@@ -154,17 +159,52 @@ export default class Hoi4ModCreator extends EventEmitter {
             if (equipmentDef.sourceFilePath) {
                 // Read the original file and update a temp copy
                 let fileContents: string[] = fs.readFileSync(mod.equipment[equipment].sourceFilePath, "utf8").split(/\r?\n/);
+                // Find the lines where the entity starts and stops.
+                const entityStartLine: number = fileContents.findIndex(line => {
+                    return line.trim().startsWith(equipmentDef.name);
+                })
+                const entityEndLine: number = fileContents.findIndex((line, lineNumber) => {
+                    return line.trim().startsWith("}") && lineNumber > entityStartLine;
+                });
+                const replacedProperties = [];
                 fileContents = fileContents.map((line: string, lineNumber: number) => {
+                    if(!line.trim().length) {
+                        return;
+                    }
                     const leadingWhiteSpace = /^(\s*)/.exec(line)[1];
                     const tokenizedLine = line.split("=").map(token => token.trim());
-                    const objectProperty = mod.equipment[equipment].getObjectPropertyForParadoxProperty(tokenizedLine[0]);
-                    if (objectProperty !== undefined && lineNumber === objectProperty.line) {
-                        const formattedValue = objectProperty.toParadoxFormat();
-                        return leadingWhiteSpace + tokenizedLine[0] + " = " + formattedValue;
+                    const fieldName = getMappingForField(tokenizedLine[0], mod.equipment[equipment].constructor);
+                    const value = mod.equipment[equipment][fieldName];
+                    if (value !== undefined) {
+                        replacedProperties.push(getMappingForField(tokenizedLine[0], mod.equipment[equipment].constructor));
+                        const lineMappings = mod.equipment[equipment].lineMappings;
+                        if (lineMappings[fieldName] == lineNumber) {
+                            const typeMapping = getParadoxTypeForfield(fieldName, mod.equipment[equipment].constructor);
+                            const formattedValue = convertValueToParadoxString(equipmentDef[fieldName], typeMapping);
+                            return leadingWhiteSpace + tokenizedLine[0] + " = " + formattedValue;
+                        }
                     } else {
                         return line;
                     }
                 });
+                // Insert new properties before the endLine
+                const linesToInsert = [];
+                for (const property in mod.equipment[equipment]) {
+                    if (!replacedProperties.includes(property)) {
+                        const paradoxType = getParadoxTypeForfield(property, mod.equipment[equipment].constructor)
+                        if(paradoxType !== undefined) {
+                            const paradoxProperty = getMappingForField(property, mod.equipment[equipment].constructor);
+                            const value = mod.equipment[equipment][property];
+                            if (value !== undefined) {
+                                linesToInsert.push("\t\t" + paradoxProperty + " = " + convertValueToParadoxString(value, paradoxType));
+                            }
+                        }
+                    }
+                }
+                for (const line of linesToInsert) {
+                    fileContents.splice(entityEndLine, 0, line);
+                }
+
                 fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", paths.basename(equipmentDef.sourceFilePath)), fileContents.join(os.EOL));
             } else {
                 fs.writeFileSync(paths.join(tempDirectoryRoot, "common", "units", "equipment", equipment + ".txt"), equipmentDef.toParadoxFormat(), {

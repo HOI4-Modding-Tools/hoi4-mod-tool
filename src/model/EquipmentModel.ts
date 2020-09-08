@@ -7,85 +7,85 @@ import ParadoxProperty from "./decorators/ParadoxProperty";
 export default class EquipmentModel extends ModEntityModel {
     public name: string;
     public sourceFilePath: string;
-    @ParadoxProperty()
-    private year: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("year", "number");
-    @ParadoxProperty()
-    private picture: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("picture", "string");
-    @ParadoxProperty()
-    private isArchetype: ParadoxEntityProperty<boolean> = new ParadoxEntityProperty<boolean>("is_archetype", "boolean");
-    @ParadoxProperty()
-    private archetype: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("archetype", "string");
-    @ParadoxProperty()
-    private isBuildable: ParadoxEntityProperty<boolean> = new ParadoxEntityProperty<boolean>("is_buildable", "boolean");
+    @ParadoxProperty("year", "number")
+    private year: number;
+    @ParadoxProperty("picture", "string")
+    private picture:string
+    @ParadoxProperty("is_archetype", "boolean")
+    private isArchetype:boolean
+    @ParadoxProperty("archetype", "string")
+    private archetype:string;
+    @ParadoxProperty("is_buildable", "boolean")
+    private isBuildable: boolean;
     /**
      * If this equipment can be built without requiring unlocking with a technology.
      */
-    @ParadoxProperty()
-    private active: ParadoxEntityProperty<boolean> = new ParadoxEntityProperty<boolean>("active", "boolean");
-    @ParadoxProperty()
-    private type: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("type", "InternalType");
-    @ParadoxProperty()
-    private groupBy: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("group_by", "string");
-    @ParadoxProperty()
-    private interfaceCategory: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("interface_category", "string");
-    @ParadoxProperty()
-    private parent: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("parent", "string");
-    @ParadoxProperty()
-    private priority: ParadoxEntityProperty<string> = new ParadoxEntityProperty<string>("priority", "string");
-    @ParadoxProperty()
-    private visualLevel: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("visual_level", "number");
+    @ParadoxProperty("active", "boolean")
+    private active: boolean;
+    @ParadoxProperty("type", "InternalType")
+    private type:string;
+    @ParadoxProperty("group_by", "string")
+    private groupBy:string;
+    @ParadoxProperty("interface_category", "string")
+    private interfaceCategory:string;
+    @ParadoxProperty("parent", "string")
+    private parent:string;
+    @ParadoxProperty("priority", "string")
+    private priority: string;
+    @ParadoxProperty("visual_level", "number")
+    private visualLevel: number;
 
     /**
      * Costs
      */
-    @ParadoxProperty()
-    private lendLeaseCost: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("lend_least_cost", "number");
+    @ParadoxProperty("lend_least_cost", "number")
+    private lendLeaseCost:number;
     /**
      * How much factory output used to produce.
      */
-    @ParadoxProperty()
-    private buildCostIc: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("build_cost_ic", "number");
+    @ParadoxProperty("build_cost_ic", "number")
+    private buildCostIc: number;
     /**
      *
      */
-    @ParadoxProperty()
-    private manpower: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("manpower", "number");
-    @ParadoxProperty()
-    private resources: ParadoxEntityProperty<{ [index: string]: number }> = new ParadoxEntityProperty<{ [index: string]: number }>("resources", "map");
+    @ParadoxProperty("manpower", "number")
+    private manpower: number;
+    @ParadoxProperty( "resources", "map")
+    private resources: { [index: string]: number };
 
-    @ParadoxProperty()
-    private maxOrganization: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("max_organization", "number");
-    @ParadoxProperty()
-    private reliability: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("reliability", "number");
-    @ParadoxProperty()
-    private weight: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("weight", "number");
-    @ParadoxProperty()
-    private maximumSpeed: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("maximum_speed", "number", 4);
-    @ParadoxProperty()
-    private supplyConsumption: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("supply_consumption", "number");
-    @ParadoxProperty()
-    private defaultMorale: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("default_morale", "number");
+    @ParadoxProperty("max_organization", "number")
+    private maxOrganization:number;
+    @ParadoxProperty("reliability", "number")
+    private reliability: number;
+    @ParadoxProperty("weight", "number")
+    private weight:number;
+    @ParadoxProperty("maximum_speed", "number")
+    private maximumSpeed:number;
+    @ParadoxProperty("supply_consumption", "number")
+    private supplyConsumption: number;
+    @ParadoxProperty("default_morale", "number")
+    private defaultMorale: number;
     /**
      * Defensive values
      */
-    @ParadoxProperty()
-    private defense: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("defense", "number");
-    @ParadoxProperty()
-    private breakthrough: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("breakthrough", "number");
-    @ParadoxProperty()
-    private armor: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("armor", "number");
+    @ParadoxProperty("defense", "number")
+    private defense: number;
+    @ParadoxProperty("breakthrough", "number")
+    private breakthrough: number;
+    @ParadoxProperty("armor", "number")
+    private armor: number;
 
     /**
      * Offensive values
      */
-    @ParadoxProperty()
-    private softAttack: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("soft_attack", "number");
-    @ParadoxProperty()
-    private hardAttack: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("hard_attack", "number");
-    @ParadoxProperty()
-    private armorPenetration: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("ap_attack", "number");
-    @ParadoxProperty()
-    private airAttack: ParadoxEntityProperty<number> = new ParadoxEntityProperty<number>("air_attack", "number");
+    @ParadoxProperty("soft_attack", "number")
+    private softAttack: number;
+    @ParadoxProperty("hard_attack", "number")
+    private hardAttack: number;
+    @ParadoxProperty("ap_attack", "number")
+    private armorPenetration: number;
+    @ParadoxProperty("air_attack", "number")
+    private airAttack: number;
 
     public readonly localization_name:string;
     public readonly localization_description:string;

@@ -1,17 +1,46 @@
 import "reflect-metadata";
 import * as util from "util";
-export default function ParadoxProperty() {
-    return (target:any, property:string) => {
-        const paradoxProperties:string[] = Reflect.getMetadata("ParadoxProperties", target.constructor);
-        if(paradoxProperties) {
-            paradoxProperties.push(property);
-        } else {
-            Reflect.defineMetadata("ParadoxProperties", [property], target.constructor);
+
+export default function ParadoxProperty(paradoxPropertyName, paradoxPropertyType) {
+    return (target: any, property: string) => {
+        let propertyMappings = Reflect.getMetadata("ParadoxProperties", target.constructor);
+        if (!propertyMappings) {
+            propertyMappings = {};
         }
+        propertyMappings[paradoxPropertyName] = property;
+        propertyMappings[property] = paradoxPropertyName;
+        Reflect.defineMetadata("ParadoxProperties", propertyMappings, target.constructor);
+
+        let typeMappings = Reflect.getMetadata("ParadoxFieldTypes", target.constructor);
+        if(!typeMappings) {
+            typeMappings = {};
+        }
+        typeMappings[property] = paradoxPropertyType;
+        typeMappings[paradoxPropertyName] = paradoxPropertyType;
+        Reflect.defineMetadata("ParadoxFieldTypes", typeMappings, target.constructor);
     }
 }
 
+/**
+ * Give a field name to get the paradox property name, or vice versa.
+ * @param field
+ * @param target
+ */
+export function getMappingForField(field:string, constructor: any) {
+    const propertyMappings = Reflect.getMetadata("ParadoxProperties", constructor);
+    return propertyMappings[field];
+}
+
+export function getParadoxTypeForfield(field:string, constructor: any):string {
+    const typeMappings = Reflect.getMetadata("ParadoxFieldTypes", constructor);
+
+    return typeof typeMappings[field] === "string" ? typeMappings[field] : undefined;
+}
+
 export function convertValueToParadoxString(value: any, paradoxType: string) {
+    if (value === undefined) {
+        return undefined;
+    }
     switch (paradoxType) {
         case "string":
             return util.format("\"%s\"", value)

@@ -1,9 +1,11 @@
 import * as os from "os";
 import * as util from "util";
-import {getParadoxEntityName} from "./decorators/ParadoxEntity";
 import ParadoxEntityProperty from "./ParadoxEntityProperty";
+import {getMappingForField} from "./decorators/ParadoxProperty";
 
 export default abstract class ModEntityModel {
+    private _lineMappings = {};
+
     toParadoxFormat() {
         let fileContent = "";
         const paradoxEntityCategory = Reflect.getMetadata("ParadoxEntityCategory", this.constructor);
@@ -31,10 +33,7 @@ export default abstract class ModEntityModel {
 
     updateFrom(object: any) {
         for (const property in object) {
-            const field = this[property];
-            if (field.hasOwnProperty("value")) {
-                field.value = object[property];
-            } else {
+            if(getMappingForField(property, this.constructor)) {
                 this[property] = object[property];
             }
         }
@@ -56,5 +55,8 @@ export default abstract class ModEntityModel {
             }
         }
     }
-}
 
+    get lineMappings() {
+        return this._lineMappings;
+    }
+}

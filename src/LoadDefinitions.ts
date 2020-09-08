@@ -4,7 +4,7 @@ import EquipmentModel from "./model/EquipmentModel";
 import UnitModel from "./model/UnitModel";
 import * as _ from "lodash";
 import ParadoxEntityProperty from "./model/ParadoxEntityProperty";
-import {parseParadoxString, valueToParadox} from "./model/decorators/ParadoxProperty";
+import {getMappingForField, getParadoxTypeForfield, parseParadoxString} from "./model/decorators/ParadoxProperty";
 
 export default function LoadDefinitions(directory: string, existingDefinitions?: any): {[index:string] : any} {
     existingDefinitions = existingDefinitions || {};
@@ -44,7 +44,7 @@ function readFileAndLoadEntities(filePath: string): any {
 
 function parseEntitiesFromFileToType(filePath:string, fileLines:string[], entityConstructor: any) {
     // Iterate each line in the file.
-    let workingInstance: {[property:string]: any} = {};
+    let workingInstance: {[property:string]: any};
     const entities:{[property:string]: any} =  {};
     let mode:string[] = [];
     fileLines.forEach((line:string, lineNumber:number) => {
@@ -81,9 +81,10 @@ function parseEntitiesFromFileToType(filePath:string, fileLines:string[], entity
                 mode.push(tokenizedLine[0]);
                 return;
         }
-        const objectProperty:ParadoxEntityProperty<any> = workingInstance.getObjectPropertyForParadoxProperty(tokenizedLine[0]);
-        objectProperty.value = parseParadoxString(tokenizedLine[1], objectProperty.paradoxPropertyType);
-        objectProperty.line = lineNumber + 1;
+        const fieldName = getMappingForField(tokenizedLine[0], entityConstructor);
+        const fieldParadoxType = getParadoxTypeForfield(fieldName, entityConstructor);
+        workingInstance[fieldName] = parseParadoxString(tokenizedLine[1], fieldParadoxType);
+        workingInstance.lineMappings[fieldName] = lineNumber + 1;
     });
     return entities;
 }
