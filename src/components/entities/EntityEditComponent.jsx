@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import React from "react";
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControl from "@material-ui/core/FormControl";
@@ -9,19 +10,21 @@ import Checkbox from "@material-ui/core/Checkbox";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import Button from "@material-ui/core/Button";
+import {connect} from "react-redux";
+import {withRouter} from "react-router";
 
-export default class extends React.Component{
-    validateProps(props){
-        if(props.modName === undefined) {
+export class EntityEditComponent extends React.Component {
+    validateProps(props) {
+        if (props.modName === undefined) {
             throw new Error("Missing required prop 'modName'");
         }
-        if(props.entity === undefined) {
+        if (props.entity === undefined) {
             throw new Error("Missing required prop 'entity'");
         }
-        if(props.category === undefined) {
+        if (props.category === undefined) {
             throw new Error("Missing required prop 'category'");
         }
-        if(props.entityName === undefined) {
+        if (props.entityName === undefined) {
             throw new Error("Missing required prop 'entityName'");
         }
     }
@@ -39,7 +42,7 @@ export default class extends React.Component{
 
         this.update = (property, validators) => {
             return (event) => {
-                const newValue = this.extractValueFromEvent(event, this.fields[property].type);
+                const newValue = this.extractValueFromEvent(event, this.props.uiFields[property].type);
                 const valid = !validators || validators.reduce((isValidSoFar, validator) => isValidSoFar && validator(newValue), true);
                 const state = {...this.state};
                 if (valid) {
@@ -66,67 +69,69 @@ export default class extends React.Component{
     render() {
         return (
             <div id={this.props.category}>
-                {Object.keys(this.fields).map((fieldId, index) => {
-                    const field = this.fields[fieldId];
-                    const enabled = !field.enabledWhen || field.enabledWhen();
-                    switch (field.type) {
+                <h2>{this.props.categoryName}</h2>
+                <FormGroup key="name">
+                    <FormControl error={this.state.fieldErrors["name"]}>
+                        <InputLabel>Name</InputLabel>
+                        <Input value={this.props.entity["name"] || ""}
+                               onChange={this.update("name")}/>
+                    </FormControl>
+                </FormGroup>
+                {Object.keys(this.props.uiFields).map((fieldId, index) => {
+                    const field = this.props.uiFields[fieldId].uiConfig;
+                    switch (field.inputType) {
                         case "text":
                             return (
                                 <FormGroup key={this.props.entityName + fieldId}>
                                     <FormControl error={this.state.fieldErrors[fieldId]}>
                                         <InputLabel>{field.label}</InputLabel>
-                                        <Input value={this.props.entity[fieldId]} disabled={!enabled}
+                                        <Input value={this.props.entity[fieldId] || ""}
                                                onChange={this.update(fieldId, field.validators)}/>
                                         <FormHelperText>{field.helperText}</FormHelperText>
                                     </FormControl>
                                 </FormGroup>);
-                        case "boolean":
+                        case "checkbox":
                             return (
                                 <FormGroup key={this.props.entityName + fieldId}>
                                     <FormControl error={this.state.fieldErrors[fieldId]}>
                                         <FormControlLabel
-                                            control={<Checkbox checked={this.props.entity[fieldId]} disabled={!enabled}
+                                            control={<Checkbox checked={this.props.entity[fieldId] || false}
                                                                onChange={this.update(fieldId, field.validators)}/>}
                                             label={field.label}/>
                                         <FormHelperText>{field.helperText}</FormHelperText>
                                     </FormControl>
                                 </FormGroup>);
-                        case "select":
-                            return (
-                                <FormGroup key={this.props.entityName + fieldId}>
-                                    <FormControl error={this.state.fieldErrors[fieldId]}>
-                                        <InputLabel>{field.label}</InputLabel>
-                                        <Select value={this.props.entity[fieldId] || ""}
-                                                onChange={this.update(fieldId, field.validators)}>
-                                            {this.fields[fieldId].options.map(selectOption => {
-                                                return (<MenuItem key={selectOption} value={selectOption}>{selectOption}</MenuItem>)
-                                            })}
-                                        </Select>
-                                    </FormControl>
-                                </FormGroup>
-                            )
+                        case "select[string]":
+                            if (!field.options) {
+                                console.warn("Didn't render property", fieldId, "it was missing required property 'options'");
+                            } else {
+                                return (
+                                    <FormGroup key={this.props.entityName + fieldId}>
+                                        <FormControl error={this.state.fieldErrors[fieldId]}>
+                                            <InputLabel>{field.label}</InputLabel>
+                                            <Select value={this.props.entity[fieldId] || ""}
+                                                    onChange={this.update(fieldId, field.validators)}>
+                                                {field.options.map(selectOption => {
+                                                    return (<MenuItem key={selectOption}
+                                                                      value={selectOption}>{selectOption}</MenuItem>)
+                                                })}
+                                            </Select>
+                                        </FormControl>
+                                    </FormGroup>
+                                )
+                            }
                         case "number":
                             return (
                                 <FormGroup key={this.props.entityName + fieldId}>
                                     <FormControl error={this.state.fieldErrors[fieldId]}>
                                         <InputLabel>{field.label}</InputLabel>
-                                        <Input value={this.props.entity[fieldId]} disabled={!enabled} type="number"
+                                        <Input value={this.props.entity[fieldId] || 0} type="number"
                                                onChange={this.update(fieldId, field.validators)}/>
                                         <FormHelperText>{field.helperText}</FormHelperText>
                                     </FormControl>
                                 </FormGroup>);
-                        case "map[number]":
-                            const existingValues = Object.keys(this.props.entity[fieldId]).map(property => {
-                                return(<FormGroup key={this.props.entityName + fieldId + property}>
-                                    <FormControl error={this.state.fieldErrors[fieldId][property]}>
-                                        <InputLabel>{property}</InputLabel>
-                                        <input value={this.props.entity[fieldId][property]}/>
-                                    </FormControl>
-                                </FormGroup>)
-                            });
-                            return (<FormGroup key={this.props.entityName + fieldId}>
-
-                            </FormGroup>);
+                        default:
+                            console.warn("Failed to render a component of type", field.inputType);
                     }
                 })}
                 <Button onClick={this.saveEntity} color="primary" variant="contained" key="save-button">
@@ -137,3 +142,19 @@ export default class extends React.Component{
     }
 
 }
+
+const connected = withRouter(connect((state, ownProps) => {
+    const modName = decodeURIComponent(ownProps.match.params.modName);
+    const mod = state.mods[modName];
+    const category = "_" + ownProps.match.params.category;
+    const entity = _.get(mod, [category, ownProps.match.params.entity], {});
+    return {
+        modName,
+        categoryName: _.get(state.uiConfig, [ownProps.match.params.category, "categoryLabel"]),
+        category: ownProps.match.params.category,
+        uiFields: _.get(state.uiConfig, [ownProps.match.params.category, "entityProperties"], {}),
+        entity,
+        entityName: ownProps.match.params.entity || "new"
+    };
+})(EntityEditComponent));
+export default connected;

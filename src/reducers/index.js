@@ -17,6 +17,15 @@ const stateReducers = combineReducers({
             return null;
         }
         return state;
+    },
+    uiConfig: function(state, action) {
+        if(action.type === 'UiConfiguration') {
+            return action.config;
+        }
+        if(state === undefined) {
+            return {};
+        }
+        return state;
     }
 });
 

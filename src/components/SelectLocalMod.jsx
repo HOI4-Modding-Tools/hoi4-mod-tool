@@ -34,11 +34,14 @@ export class SelectLocalMod extends React.Component {
                     <h1 style={{textAlign: "center"}}>
                         Available Local Mods
                     </h1>
+                    <div style={{textAlign: "center"}}>
+                        Click to start editing.
+                    </div>
                     <List>
                         {list}
                     </List>
                     <div style={{textAlign: "center"}}>To create new mods, use the built-in tools in the Paradox Launcher.</div>
-                    <h2>Instruction, Caveats and Warnings</h2>
+                    <h2>Instructions, Caveats and Warnings</h2>
                     <ul>
                         <li>No guarantee is made this program won't mess up your files. Keep backups!</li>
                         <li>Right now, when you creat a new entity, each new entity is written to their own file.</li>

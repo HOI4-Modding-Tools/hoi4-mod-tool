@@ -13,9 +13,10 @@ import LoadDefinitions from "./LoadDefinitions";
 import {
     convertValueToParadoxString,
     getMappingForField,
-    getParadoxTypeForfield
+    getParadoxTypeForfield, getPropertiesForEntity
 } from "./model/decorators/ParadoxProperty";
 import ModEntityModel from "./model/ModEntityModel";
+import {getEntities} from "./model/decorators/ParadoxEntity";
 
 export default class Hoi4ModCreator extends EventEmitter {
     private readonly mods: { [index: string]: ModModel } = {};
@@ -235,5 +236,19 @@ export default class Hoi4ModCreator extends EventEmitter {
                 console.error(err);
             }
         });
+    }
+
+    generateUiConfiguration() {
+        const entityDefinitions = getEntities();
+        return Object.keys(entityDefinitions).reduce((definitions, nextEntityName) => {
+           const entityDefinition = entityDefinitions[nextEntityName];
+           const entityProperties = getPropertiesForEntity(entityDefinition.constructor);
+            definitions[nextEntityName] = {
+                categoryName: nextEntityName,
+                categoryLabel: entityDefinition.displayName,
+                entityProperties
+            };
+           return definitions;
+        }, {});
     }
 }

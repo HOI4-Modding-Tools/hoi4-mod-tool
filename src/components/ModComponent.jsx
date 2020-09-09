@@ -6,12 +6,11 @@ import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
 import {Route, withRouter} from "react-router-dom";
 import Drawer from "@material-ui/core/Drawer";
-import EquipmentComponent from "./entities/EquipmentComponent";
 import {withStyles} from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import EntityListComponent from "./EntityListComponent";
-import UnitComponent from "./entities/UnitComponent";
 import ModDefinitionComponent from "./entities/ModDefinitionComponent";
+import EntityEditComponent from "./entities/EntityEditComponent";
 
 export class ModComponent extends React.Component {
     constructor(props) {
@@ -39,12 +38,16 @@ export class ModComponent extends React.Component {
                                     <ListItemText>Switch Mod</ListItemText>
                                 </ListItem>
                                 <Divider/>
-                                <EntityListComponent entityCategory="equipment" label="Equipment"
-                                                     mod={this.props.modName}></EntityListComponent>
-                                <Divider/>
-                                <EntityListComponent entityCategory="units" label="Units"
-                                                     mod={this.props.modName}></EntityListComponent>
-                                <Divider/>
+                                {Object.keys(this.props.uiConfig).map(category => {
+                                    return (
+                                        <React.Fragment>
+                                            <EntityListComponent entityCategory={this.props.uiConfig[category].categoryName}
+                                                                 mod={this.props.modName}
+                                                                 label={this.props.uiConfig[category].categoryLabel}/>
+                                            <Divider/>
+                                        </React.Fragment>
+                                    )
+                                })}
                             </List>
                         </Drawer>
                     </nav>
@@ -52,11 +55,8 @@ export class ModComponent extends React.Component {
                         <Route exact path="/mod/:modName">
                             <ModDefinitionComponent mod={modName}/>
                         </Route>
-                        <Route path="/mod/:modName/equipment/:equipment?">
-                            <EquipmentComponent mod={modName} item={this.props.match.equipment}/>
-                        </Route>
-                        <Route path="/mod/:modName/units/:unit?">
-                            <UnitComponent mod={modName} item={this.props.match.unit}/>
+                        <Route path="/mod/:modName/:category/:entity?">
+                            <EntityEditComponent/>
                         </Route>
                     </main>
                 </div>
@@ -69,7 +69,8 @@ export default connect((state, ownProps) => {
     return {
         mod: state.mods[decodeURIComponent(ownProps.match.params.modName)],
         modName: decodeURIComponent(ownProps.match.params.modName),
-        match: ownProps.match
+        match: ownProps.match,
+        uiConfig: state.uiConfig
     };
 })(withStyles(theme => ({
     root: {
