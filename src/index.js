@@ -10,7 +10,7 @@ String.prototype.fromSnakeCaseToCamelCase = function () {
     });
 };
 
-String.prototype.fromCamelCaseToSnakeCase = function(){
+String.prototype.fromCamelCaseToSnakeCase = function () {
     const capitalMatcher = /([A-Z])/;
     return this.replace(capitalMatcher, "_$&").toLowerCase();
 }
@@ -50,13 +50,18 @@ app.on('ready', function () {
             modMappings[nextMod] = engine.getMods()[nextMod].asSimpleObject();
             return modMappings;
         }, {});
+        const uiConfig = engine.generateUiConfiguration();
+        mainWindow.webContents.send("message", {
+            type: "UiConfiguration",
+            config: uiConfig
+        });
         mainWindow.webContents.send("message", {
             type: "UpdateAvailableMods",
             mods
         })
     });
 
-    ipcMain.on("message", function(event, arg){
+    ipcMain.on("message", function (event, arg) {
         console.log(arg);
         const action = JSON.parse(arg);
         switch (action.type) {

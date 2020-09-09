@@ -1,7 +1,7 @@
 {
   "name": "hoi4-mod-tool",
   "productName": "HOI4 Mod Tool",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "My Electron application description",
   "main": "src/index.js",
   "scripts": {
@@ -33,7 +33,7 @@
         "packageManager": "yarn"
       },
       "electronWinstallerConfig": {
-        "name": "electron_flient"
+        "name": "electron_client"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
