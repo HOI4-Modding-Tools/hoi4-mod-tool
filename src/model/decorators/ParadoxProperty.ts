@@ -1,23 +1,37 @@
 import "reflect-metadata";
 import * as util from "util";
+import ModModel from "../ModModel";
 
-export default function ParadoxProperty(paradoxPropertyName, paradoxPropertyType) {
+export default function ParadoxProperty(paradoxPropertyName:string, paradoxPropertyType: string, uiConfig: { label:string, helperText?: string, inputType: string, options?:any[]}) {
     return (target: any, property: string) => {
         let propertyMappings = Reflect.getMetadata("ParadoxProperties", target.constructor);
         if (!propertyMappings) {
             propertyMappings = {};
+            Reflect.defineMetadata("ParadoxProperties", propertyMappings, target.constructor);
         }
         propertyMappings[paradoxPropertyName] = property;
         propertyMappings[property] = paradoxPropertyName;
-        Reflect.defineMetadata("ParadoxProperties", propertyMappings, target.constructor);
 
         let typeMappings = Reflect.getMetadata("ParadoxFieldTypes", target.constructor);
         if(!typeMappings) {
             typeMappings = {};
+            Reflect.defineMetadata("ParadoxFieldTypes", typeMappings, target.constructor);
         }
         typeMappings[property] = paradoxPropertyType;
         typeMappings[paradoxPropertyName] = paradoxPropertyType;
-        Reflect.defineMetadata("ParadoxFieldTypes", typeMappings, target.constructor);
+
+        let entityProperties = Reflect.getMetadata("EntityProperties", target.constructor);
+        if(!entityProperties) {
+            entityProperties = {};
+            Reflect.defineMetadata("EntityProperties", entityProperties, target.constructor);
+        }
+
+        entityProperties[property] = {
+            fieldName: property,
+            propertyName: paradoxPropertyName,
+            type: paradoxPropertyType,
+            uiConfig
+        }
     }
 }
 
@@ -69,4 +83,8 @@ export function parseParadoxString(value: any, paradoxType: string) {
         default:
             throw new Error("Didn't understand " + paradoxType);
     }
+}
+
+export function getPropertiesForEntity(entity:any):{[property:string]: any} {
+    return Reflect.getMetadata("EntityProperties", entity);
 }

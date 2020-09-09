@@ -1,105 +1,231 @@
-
 import ModEntityModel from "./ModEntityModel";
 import {GroupType} from "./GroupType";
 import {ParadoxEntity} from "./decorators/ParadoxEntity";
 import ParadoxProperty from "./decorators/ParadoxProperty";
 
-@ParadoxEntity("sub_units")
+@ParadoxEntity("sub_units", "Sub Units")
 export default class UnitModel extends ModEntityModel {
     public name: string;
     public sourceFilePath: string;
-    @ParadoxProperty("map_icon_category", "string")
-    private mapIconCategory:string;
-    @ParadoxProperty("priority", "number")
-    private iconPriority:string;
-    @ParadoxProperty("ai_priority", "number")
-    private aiIconPriority:string;
-    @ParadoxProperty("active", "boolean")
-    private active:boolean;
-    @ParadoxProperty("cavalry", "boolean")
-    private isCavalry:boolean;
-    @ParadoxProperty("cavalry", "boolean")
-    private isSpecialForces:boolean;
-    @ParadoxProperty("marines", "boolean")
-    private isMarines:boolean;
-    @ParadoxProperty("mountaineers", "boolean")
-    private isMountaineers:boolean;
-    @ParadoxProperty("can_be_parachuted", "boolean")
-    private canBeParachuted:boolean;
-    @ParadoxProperty("transport", "string")
-    private transportEquipmentName:string;
-    @ParadoxProperty("group", "GroupType")
-    private group:string;
-    @ParadoxProperty("type", "InternalType")
-    private types:string;
-    @ParadoxProperty("categories", "string[]")
-    private categories:string[];
-    @ParadoxProperty("essential", "string[]")
-    private essentialEquipment:string[];
-    @ParadoxProperty("essential", "string[]")
-    private neededEquipment:string[];
+    @ParadoxProperty("map_icon_category", "string", {
+        label: "Icon",
+        inputType: "text"
+    })
+    private mapIconCategory: string;
+    @ParadoxProperty("priority", "number", {
+        label: "Priority",
+        inputType: "number"
+    })
+    private iconPriority: string;
+    @ParadoxProperty("ai_priority", "number", {
+        label: "AI Priority",
+        inputType: "number"
+    })
+    private aiIconPriority: string;
+    @ParadoxProperty("active", "boolean", {
+        label: "Is Active",
+        inputType: "checkbox"
+    })
+    private active: boolean;
+    @ParadoxProperty("cavalry", "boolean", {
+        label: "Is Cavalry",
+        inputType: "checkbox"
+    })
+    private isCavalry: boolean;
+    @ParadoxProperty("cavalry", "boolean", {
+        label: "Is Special Forces",
+        inputType: "checkbox"
+    })
+    private isSpecialForces: boolean;
+    @ParadoxProperty("marines", "boolean", {
+        label: "Is Marines",
+        inputType: "checkbox"
+    })
+    private isMarines: boolean;
+    @ParadoxProperty("mountaineers", "boolean", {
+        label: "Is Mountaineers",
+        inputType: "checkbox"
+    })
+    private isMountaineers: boolean;
+    @ParadoxProperty("can_be_parachuted", "boolean", {
+        label: "Can Be Parachuted",
+        inputType: "checkbox"
+    })
+    private canBeParachuted: boolean;
+    @ParadoxProperty("transport", "string", {
+        label: "Transport",
+        inputType: "text",
+        helperText: "The name of the equipment type used to determine the speed of this unit (for mechanized infantry, etc.)"
+    })
+    private transportEquipmentName: string;
+    @ParadoxProperty("group", "GroupType", {
+        label: "Group",
+        inputType: "text"
+    })
+    private group: string;
+    @ParadoxProperty("type", "InternalType", {
+        label: "Type",
+        inputType: "text"
+    })
+    private types: string;
+    @ParadoxProperty("categories", "string[]", {
+        label: "Categories",
+        inputType: "text"
+    })
+    private categories: string[];
+    @ParadoxProperty("essential", "string[]", {
+        label: "Essential Equipment",
+        inputType: "select[string]"
+    })
+    private essentialEquipment: string[];
+    @ParadoxProperty("essential", "string[]", {
+        label: "Needed Equipment",
+        inputType: "select[equipment]"
+    })
+    private neededEquipment: string[];
 
-    @ParadoxProperty("max_organization", "number")
-    private maxOrganization:number;
-    @ParadoxProperty("reliability", "number")
-    private reliability:number;
-    @ParadoxProperty("weight", "number")
-    private weight:number;
-    @ParadoxProperty("maximum_speed", "number")
-    private maximumSpeedMultiplier:number;
-    @ParadoxProperty("supply_consumption", "number")
-    private supplyConsumption:number;
-    @ParadoxProperty("default_morale", "number")
-    private defaultMorale:number;
-    @ParadoxProperty("combat_width", "number")
-    private combatWidth:number;
+    @ParadoxProperty("max_organization", "number", {
+        label: "Priority",
+        inputType: "number"
+    })
+    private maxOrganization: number;
+    @ParadoxProperty("reliability", "number", {
+        label: "Reliability",
+        inputType: "number"
+    })
+    private reliability: number;
+    @ParadoxProperty("weight", "number", {
+        label: "weight",
+        inputType: "number"
+    })
+    private weight: number;
+    @ParadoxProperty("maximum_speed", "number", {
+        label: "Maximum Speed Modifier",
+        inputType: "number"
+    })
+    private maximumSpeedMultiplier: number;
+    @ParadoxProperty("supply_consumption", "number", {
+        label: "Supply Consumption",
+        inputType: "number"
+    })
+    private supplyConsumption: number;
+    @ParadoxProperty("default_morale", "number", {
+        label: "Default Morale",
+        inputType: "number"
+    })
+    private defaultMorale: number;
+    @ParadoxProperty("combat_width", "number", {
+        label: "Combat Width",
+        inputType: "number"
+    })
+    private combatWidth: number;
 
-    @ParadoxProperty("manpower", "number")
-    private manpower:number;
-    @ParadoxProperty("training_time", "number")
-    private trainingTime:number;
+    @ParadoxProperty("manpower", "number", {
+        label: "Manpower",
+        inputType: "number"
+    })
+    private manpower: number;
+    @ParadoxProperty("training_time", "number", {
+        label: "Training Time",
+        inputType: "number"
+    })
+    private trainingTime: number;
 
-    @ParadoxProperty("attack", "number")
-    private firepower:number;
-    @ParadoxProperty("soft_attack", "number")
-    private softAttack:number;
-    @ParadoxProperty("hard_attack", "number")
-    private hardAttack:number;
-    @ParadoxProperty("air_attack", "number")
-    private airAttack:number;
-    @ParadoxProperty("ap_attack", "number")
-    private armorPiercing:number;
-    @ParadoxProperty("breakthrough", "number")
-    private breakthrough:number;
+    @ParadoxProperty("attack", "number", {
+        label: "Firepower",
+        inputType: "number"
+    })
+    private firepower: number;
+    @ParadoxProperty("soft_attack", "number", {
+        label: "Soft Attack",
+        inputType: "number"
+    })
+    private softAttack: number;
+    @ParadoxProperty("hard_attack", "number", {
+        label: "Hard Attack",
+        inputType: "number"
+    })
+    private hardAttack: number;
+    @ParadoxProperty("air_attack", "number", {
+        label: "Air Attack",
+        inputType: "number"
+    })
+    private airAttack: number;
+    @ParadoxProperty("ap_attack", "number", {
+        label: "Armor Penetration",
+        inputType: "number"
+    })
+    private armorPiercing: number;
+    @ParadoxProperty("breakthrough", "number", {
+        label: "Breakthrough",
+        inputType: "number"
+    })
+    private breakthrough: number;
 
-    @ParadoxProperty("defense", "number")
-    private defense:number;
-    @ParadoxProperty("max_strength", "number")
-    private maxStrength:number;
-    @ParadoxProperty("armor_value", "number")
-    private armor:number;
-    @ParadoxProperty("hardness", "number")
-    private hardness:number;
-    @ParadoxProperty("entrenchment", "number")
-    private entrenchmentModifier:number;
+    @ParadoxProperty("defense", "number", {
+        label: "Defense",
+        inputType: "number"
+    })
+    private defense: number;
+    @ParadoxProperty("max_strength", "number", {
+        label: "Max Strength",
+        inputType: "number"
+    })
+    private maxStrength: number;
+    @ParadoxProperty("armor_value", "number", {
+        label: "Armor",
+        inputType: "number"
+    })
+    private armor: number;
+    @ParadoxProperty("hardness", "number", {
+        label: "Hardness",
+        inputType: "number"
+    })
+    private hardness: number;
+    @ParadoxProperty("entrenchment", "number", {
+        label: "Entrenchment",
+        inputType: "number"
+    })
+    private entrenchmentModifier: number;
 
-    @ParadoxProperty("movement", "number")
-    private movement:number;
-    @ParadoxProperty("experience_loss_factor", "number")
-    private experienceLossFactor:number;
-    @ParadoxProperty("casualty_trickleback", "number")
-    private casualtyTrickleback:number;
-    @ParadoxProperty("suppression_factor", "number")
-    private suppressionFactor:number;
-    @ParadoxProperty("reliability_factor", "number")
-    private reliabilityFactor:number;
-    @ParadoxProperty("recon", "number")
-    private reconnaissance:number;
-    @ParadoxProperty("initiative", "number")
-    private initiative:number;
+    @ParadoxProperty("movement", "number", {
+        label: "Movement",
+        inputType: "number"
+    })
+    private movement: number;
+    @ParadoxProperty("experience_loss_factor", "number", {
+        label: "Experience Loss Factor",
+        inputType: "number"
+    })
+    private experienceLossFactor: number;
+    @ParadoxProperty("casualty_trickleback", "number", {
+        label: "Casualty Trickleback",
+        inputType: "number"
+    })
+    private casualtyTrickleback: number;
+    @ParadoxProperty("suppression_factor", "number", {
+        label: "Suppression Factor",
+        inputType: "number"
+    })
+    private suppressionFactor: number;
+    @ParadoxProperty("reliability_factor", "number", {
+        label: "Reliability Factor",
+        inputType: "number"
+    })
+    private reliabilityFactor: number;
+    @ParadoxProperty("recon", "number", {
+        label: "Reconnaissance",
+        inputType: "number"
+    })
+    private reconnaissance: number;
+    @ParadoxProperty("initiative", "number", {
+        label: "Initiative",
+        inputType: "number"
+    })
+    private initiative: number;
 
     public readonly localization_name: string;
-    public readonly localization_description:string;
+    public readonly localization_description: string;
 
     private constructor(props: any) {
         super();
