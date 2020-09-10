@@ -45,7 +45,7 @@ export default class EntityBuilder {
                             this.currentContext.pop();
                         }
                         if(contextHandler) {
-                            const contextHandlerReturn = contextHandler.bind(this)(text, contextValues);
+                            const contextHandlerReturn = contextHandler.bind(this)(text, contextValues, ctx);
                             if (contextHandlerReturn === undefined) {
                                 throw new Error("The context handler for '" + contextName + "' returned undefined, which is not allowed. To indicate successful handling, return an array of strings for tokens that should be expected next or null otherwise.");
                             } else if (_.isArray(contextHandlerReturn)) {

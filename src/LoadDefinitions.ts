@@ -31,7 +31,13 @@ function readFileAndLoadEntities(filePath: string): any {
     const entities = {};
     let category;
     if(parserToUse) {
-        return _.merge(entities, new parserToUse().read(fileContent));
+        const loaded = new parserToUse().read(fileContent);
+        for(const category in loaded) {
+            for(const entity in loaded[category]) {
+                loaded[category][entity].sourceFilePath = filePath;
+            }
+        }
+        return _.merge(entities, loaded);
     }
     return entities;
 }
