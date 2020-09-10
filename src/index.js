@@ -62,6 +62,14 @@ app.on('ready', function () {
         })
     });
 
+    engine.on("modUpdated", function(){
+        const mods = engine.getMods();
+        mainWindow.webContents.send("message", {
+            type: "UpdateAvailableMods",
+            mods
+        });
+    })
+
     ipcMain.on("message", function (event, arg) {
         console.log(arg);
         const action = JSON.parse(arg);
