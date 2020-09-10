@@ -37,12 +37,12 @@ export class EntityEditComponent extends React.Component {
         };
 
         this.saveEntity = () => {
-            this.props.save(this.props.modName, this.props.entity);
+            this.props.save(this.props.entity);
         }
 
         this.update = (property, validators) => {
             return (event) => {
-                const newValue = this.extractValueFromEvent(event, this.props.uiFields[property].type);
+                const newValue = this.extractValueFromEvent(event, property == "name" ? "text": this.props.uiFields[property].type);
                 const valid = !validators || validators.reduce((isValidSoFar, validator) => isValidSoFar && validator(newValue), true);
                 const state = {...this.state};
                 if (valid) {
@@ -156,5 +156,17 @@ const connected = withRouter(connect((state, ownProps) => {
         entity,
         entityName: ownProps.match.params.entity || "new"
     };
+}, (dispatch, ownProps) =>{
+    const mod = decodeURIComponent(ownProps.match.params.modName);
+    return {
+        save: function (entity) {
+            dispatch({
+                mod,
+                category:ownProps.match.params.category,
+                type: "SaveEntity",
+                entity
+            })
+        }
+    }
 })(EntityEditComponent));
 export default connected;
