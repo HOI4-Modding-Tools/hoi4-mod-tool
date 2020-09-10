@@ -54,6 +54,10 @@ export function getEntityNameForFilePrefix(content: string) {
     }).entityName;
 }
 
+export function getFilePrefixForEntity(constructor: Function) {
+    return findEntity("constructor", constructor).filePrefix;
+}
+
 export function getConstructorForEntityWithName(entityName: string) {
     return findEntity("entityName", entityName).constructor;
 }
