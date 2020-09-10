@@ -46,10 +46,11 @@ app.on('ready', function () {
     engine.initialize();
     const mainWindow = createWindow();
     mainWindow.webContents.on("did-finish-load", function () {
-        const mods = Object.keys(engine.getMods()).reduce((modMappings, nextMod) => {
-            modMappings[nextMod] = engine.getMods()[nextMod].asSimpleObject();
-            return modMappings;
-        }, {});
+        // const mods = Object.keys(engine.getMods()).reduce((modMappings, nextMod) => {
+        //     modMappings[nextMod] = engine.getMods()[nextMod].asSimpleObject();
+        //     return modMappings;
+        // }, {});
+        const mods = engine.getMods();
         const uiConfig = engine.generateUiConfiguration();
         mainWindow.webContents.send("message", {
             type: "UiConfiguration",

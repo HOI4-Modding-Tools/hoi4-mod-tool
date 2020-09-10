@@ -4,6 +4,12 @@ import EquipmentModel from "./model/EquipmentModel";
 import UnitModel from "./model/UnitModel";
 import * as _ from "lodash";
 import {getMappingForField, getParadoxTypeForfield, parseParadoxString} from "./model/decorators/ParadoxProperty";
+import {
+    getConstructorForEntityWithName,
+    getEntityNameForFilePrefix,
+    getReaderForEntity
+} from "./model/decorators/ParadoxEntity";
+import EntityReader from "./loaders/readers/EntityReader";
 
 export default function LoadDefinitions(directory: string, existingDefinitions?: any): {[index:string] : any} {
     existingDefinitions = existingDefinitions || {};
@@ -20,70 +26,16 @@ export default function LoadDefinitions(directory: string, existingDefinitions?:
 }
 
 function readFileAndLoadEntities(filePath: string): any {
-    const fileContents:string[] = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    const parserToUse:any = determineParserFromFileContents(fileContent);
     const entities = {};
     let category;
-    let loadedEntities;
-    if(fileContents[0].startsWith("equipments")) {
-        // Parse as equipment file
-        category = "equipment";
-        loadedEntities = parseEntitiesFromFileToType(filePath, fileContents.slice(1), EquipmentModel);
-    } else if(fileContents[0].startsWith("sub_units")) {
-        // Parse as unit file
-        category = "units";
-        loadedEntities = parseEntitiesFromFileToType(filePath, fileContents.slice(1), UnitModel);
+    if(parserToUse) {
+        return _.merge(entities, new parserToUse().read(fileContent));
     }
-    if(loadedEntities) {
-        entities[category] = loadedEntities;
-        return entities;
-    } else {
-        return {};
-    }
-}
-
-function parseEntitiesFromFileToType(filePath:string, fileLines:string[], entityConstructor: any) {
-    // Iterate each line in the file.
-    let workingInstance: {[property:string]: any};
-    const entities:{[property:string]: any} =  {};
-    let mode:string[] = [];
-    fileLines.forEach((line:string, lineNumber:number) => {
-        // Discard comments
-        line = line.indexOf("#") !== -1 ? line.substring(0, line.indexOf("#")) : line;
-        // Discard empty lines
-        if(!line.trim().length) {
-            return;
-        }
-        const tokenizedLine = line.split("=").map(token => token.trim());
-        if(tokenizedLine[1] === "{" && !mode.length) {
-            workingInstance = new entityConstructor()
-            workingInstance.name = tokenizedLine[0];
-            workingInstance.sourceFilePath = filePath;
-            mode.push("entity");
-            return;
-        }
-        if(tokenizedLine[0] === "}" ) {
-            if(mode[0] == "entity") {
-                entities[workingInstance.name] = workingInstance;
-                workingInstance = null;
-                mode.pop();
-                return;
-            } else if (!mode.length) {
-                return;
-            }
-        }
-        if(mode[mode.length - 1] === "resources") {
-            workingInstance.resources[tokenizedLine[0]] = tokenizedLine[1];
-        }
-        //Special property handling?
-        switch (tokenizedLine[0]) {
-            case "resources":
-                mode.push(tokenizedLine[0]);
-                return;
-        }
-        const fieldName = getMappingForField(tokenizedLine[0], entityConstructor);
-        const fieldParadoxType = getParadoxTypeForfield(fieldName, entityConstructor);
-        workingInstance[fieldName] = parseParadoxString(tokenizedLine[1], fieldParadoxType);
-        workingInstance.lineMappings[fieldName] = lineNumber + 1;
-    });
     return entities;
+}
+function determineParserFromFileContents(content: string): Function | undefined {
+    const readerConstructor = getReaderForEntity(getConstructorForEntityWithName(getEntityNameForFilePrefix(content))); 
+    return readerConstructor;
 }

@@ -1,8 +1,9 @@
 import ModEntityModel from "./ModEntityModel";
 import {ParadoxEntity} from "./decorators/ParadoxEntity";
 import ParadoxProperty from "./decorators/ParadoxProperty";
+import EquipmentReader from "../loaders/readers/EquipmentReader";
 
-@ParadoxEntity("equipment", "Equipment")
+@ParadoxEntity("equipment", "Equipment", "equipments", EquipmentReader)
 export default class EquipmentModel extends ModEntityModel {
     public name: string;
     public sourceFilePath: string;
@@ -178,9 +179,8 @@ export default class EquipmentModel extends ModEntityModel {
     public readonly localization_description: string;
 
     private constructor(props: any) {
-        super();
+        super(props);
     }
-
 
     static from(input: object) {
         return new EquipmentModel(input);

@@ -2,12 +2,9 @@ import * as  fs from "fs";
 import * as paths from "path";
 import * as os from "os";
 import * as ncp from "ncp";
-import * as _ from "lodash";
 import * as util from "util";
 import ModDescriptor from "./model/ModDescriptor";
 import ModModel from "./model/ModModel";
-import EquipmentModel from "./model/EquipmentModel";
-import UnitModel from "./model/UnitModel";
 import {EventEmitter} from "events";
 import LoadDefinitions from "./LoadDefinitions";
 import {
@@ -17,6 +14,10 @@ import {
 } from "./model/decorators/ParadoxProperty";
 import ModEntityModel from "./model/ModEntityModel";
 import {getEntities} from "./model/decorators/ParadoxEntity";
+
+// These are needed to ensure that the model decorators run.
+require("./model/EquipmentModel").default;
+require("./model/UnitModel").default;
 
 export default class Hoi4ModCreator extends EventEmitter {
     private readonly mods: { [index: string]: ModModel } = {};

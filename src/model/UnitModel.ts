@@ -2,8 +2,9 @@ import ModEntityModel from "./ModEntityModel";
 import {GroupType} from "./GroupType";
 import {ParadoxEntity} from "./decorators/ParadoxEntity";
 import ParadoxProperty from "./decorators/ParadoxProperty";
+import EquipmentReader from "../loaders/readers/EquipmentReader";
 
-@ParadoxEntity("sub_units", "Sub Units")
+@ParadoxEntity("sub_units", "Sub Units", "sub_units", EquipmentReader)
 export default class UnitModel extends ModEntityModel {
     public name: string;
     public sourceFilePath: string;

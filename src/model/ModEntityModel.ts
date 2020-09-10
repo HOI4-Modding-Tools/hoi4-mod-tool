@@ -1,8 +1,14 @@
 import * as os from "os";
-import {getMappingForField} from "./decorators/ParadoxProperty";
+import {getMappingForField, getParadoxTypeForfield} from "./decorators/ParadoxProperty";
 
 export default abstract class ModEntityModel {
     private _lineMappings = {};
+
+    constructor(props) {
+        for(const property in props) {
+            this[property] = props[property];
+        }
+    }
 
     toParadoxFormat() {
         let fileContent = "";
@@ -19,15 +25,6 @@ export default abstract class ModEntityModel {
         fileContent += "}";
         return fileContent;
     }
-
-    asSimpleObject(): { [property: string]: any } {
-        const object: { [property: string]: any } = {};
-        for (const property in this) {
-            const hasProperty = (<any>this[property]).hasOwnProperty("value");
-            object[property] = hasProperty ? (<any>this[property]).value : this[property];
-        }
-        return object;
-    };
 
     updateFrom(object: any) {
         for (const property in object) {
