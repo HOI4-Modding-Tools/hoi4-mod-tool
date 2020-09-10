@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import * as  fs from "fs";
 import * as paths from "path";
 import * as os from "os";
@@ -13,7 +14,9 @@ import {
     getParadoxTypeForfield, getPropertiesForEntity
 } from "./model/decorators/ParadoxProperty";
 import ModEntityModel from "./model/ModEntityModel";
-import {getEntities} from "./model/decorators/ParadoxEntity";
+import {getEntities, getFilePrefixForEntity} from "./model/decorators/ParadoxEntity";
+import EquipmentModel from "./model/EquipmentModel";
+import UnitModel from "./model/UnitModel";
 
 // These are needed to ensure that the model decorators run.
 require("./model/EquipmentModel").default;
@@ -25,7 +28,7 @@ export default class Hoi4ModCreator extends EventEmitter {
     private configuration: { [index: string]: any }
     private readonly configurationFileLocation: string;
 
-    constructor(configurationObject) {
+    constructor() {
         super();
         this.on("modUpdated", (updatedMod) => {
             this.saveModFiles(updatedMod);
@@ -84,16 +87,21 @@ export default class Hoi4ModCreator extends EventEmitter {
 
     replaceEntity(mod: string, type: string, entity: any) {
         const activeMod: ModModel = this.mods[mod];
+        let existingEntity;
         if (activeMod && entity.name) {
             switch (type) {
                 case "equipment":
-                    activeMod.equipment[entity.name].updateFrom(entity);
+                    existingEntity = activeMod.equipment[entity.name] || _.set(activeMod, ["equipment", entity.name],  EquipmentModel.from(entity));
                     break;
-                case "unit":
-                    activeMod.units[entity.name].updateFrom(entity);
+                case "sub_unit":
+                    existingEntity = activeMod.units[entity.name] || _.set(activeMod, ["units", entity.name],  UnitModel.from(entity));
                     break;
                 default:
                     console.error("Entity type " + type + " not supported");
+                    return;
+            }
+            if(existingEntity) {
+                existingEntity.updateFrom(entity);
             }
             this.emit("modUpdated", activeMod);
         }
@@ -152,19 +160,19 @@ export default class Hoi4ModCreator extends EventEmitter {
 
     private saveEntityFiles(entities: { [name:string]: ModEntityModel }, directoryRoot: string) {
         // @ts-ignore
-        fs.mkdirSync(paths.join(directoryRoot, "common", "units", "equipment"), {
+        fs.mkdirSync(directoryRoot, {
             recursive: true
         });
 
         for (let entity in entities) {
             // If the item was loaded from a file, let's update that file.
-            const equipmentDef: ModEntityModel = entities[entity];
-            if (equipmentDef.sourceFilePath) {
+            const entityDef: ModEntityModel = entities[entity];
+            if (entityDef.sourceFilePath) {
                 // Read the original file and update a temp copy
                 let fileContents: string[] = fs.readFileSync(entities[entity].sourceFilePath, "utf8").split(/\r?\n/);
                 // Find the lines where the entity starts and stops.
                 const entityStartLine: number = fileContents.findIndex(line => {
-                    return line.trim().startsWith(equipmentDef.name);
+                    return line.trim().startsWith(entityDef.name);
                 })
                 const entityEndLine: number = fileContents.findIndex((line, lineNumber) => {
                     return line.trim().startsWith("}") && lineNumber > entityStartLine;
@@ -174,6 +182,9 @@ export default class Hoi4ModCreator extends EventEmitter {
                     if(!line.trim().length) {
                         return;
                     }
+                    if(lineNumber <= entityStartLine || lineNumber >= entityEndLine) {
+                        return line;
+                    }
                     const leadingWhiteSpace = /^(\s*)/.exec(line)[1];
                     const tokenizedLine = line.split("=").map(token => token.trim());
                     const fieldName = getMappingForField(tokenizedLine[0], entities[entity].constructor);
@@ -181,9 +192,9 @@ export default class Hoi4ModCreator extends EventEmitter {
                     if (value !== undefined) {
                         replacedProperties.push(getMappingForField(tokenizedLine[0], entities[entity].constructor));
                         const lineMappings = entities[entity].lineMappings;
-                        if (lineMappings[fieldName] == lineNumber) {
+                        if (lineMappings[fieldName] == lineNumber + 1) { // Line numbers start at 1 in text files
                             const typeMapping = getParadoxTypeForfield(fieldName, entities[entity].constructor);
-                            const formattedValue = convertValueToParadoxString(equipmentDef[fieldName], typeMapping);
+                            const formattedValue = convertValueToParadoxString(entityDef[fieldName], typeMapping);
                             return leadingWhiteSpace + tokenizedLine[0] + " = " + formattedValue;
                         }
                     } else {
@@ -208,13 +219,20 @@ export default class Hoi4ModCreator extends EventEmitter {
                     fileContents.splice(entityEndLine, 0, line);
                 }
 
-                fs.writeFileSync(paths.join(directoryRoot, "common", "units", "equipment", paths.basename(equipmentDef.sourceFilePath)), fileContents.join(os.EOL));
+                fs.writeFileSync(paths.join(directoryRoot, paths.basename(entityDef.sourceFilePath)), fileContents.join(os.EOL));
             } else {
-                fs.writeFileSync(paths.join(directoryRoot, "common", "units", "equipment", entity + ".txt"), equipmentDef.toParadoxFormat(), {
+                const fileContent = this.generateNewFileForEntity(entityDef);
+                fs.writeFileSync(paths.join(directoryRoot, entity + ".txt"), fileContent, {
                     encoding: "utf8"
                 });
             }
         }
+    }
+
+    private generateNewFileForEntity(entity: ModEntityModel){
+        const filePrefix = util.format("%s = {%s", getFilePrefixForEntity(entity.constructor), os.EOL);
+        const fileContent = filePrefix + entity.toParadoxFormat() + os.EOL + "}";
+        return fileContent;
     }
 
     private cleanupDeletedFiles(mod: ModModel) {
