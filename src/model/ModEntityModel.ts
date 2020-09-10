@@ -1,5 +1,7 @@
 import * as os from "os";
-import {getMappingForField, getParadoxTypeForfield} from "./decorators/ParadoxProperty";
+import {getMappingForField, getParadoxTypeForfield, getPropertiesForEntity} from "./decorators/ParadoxProperty";
+import * as util from "util";
+import {getFilePrefixForEntity} from "./decorators/ParadoxEntity";
 
 export default abstract class ModEntityModel {
     private _lineMappings = {};
@@ -12,14 +14,12 @@ export default abstract class ModEntityModel {
 
     toParadoxFormat() {
         let fileContent = "";
-        const paradoxEntityCategory = Reflect.getMetadata("ParadoxEntityCategory", this.constructor);
-        fileContent += paradoxEntityCategory + " = {" + os.EOL +
-            "\t{";
-        const paradoxProperties = Reflect.getMetadata("ParadoxProperties", this.constructor);
-        for (const property of paradoxProperties) {
-            const field = this[property];
-            if (field.value) {
-                fileContent += field.toParadoxFormat();
+        fileContent += this.name + " = {" + os.EOL;
+        const paradoxProperties = getPropertiesForEntity(this.constructor);
+        for (const property in paradoxProperties) {
+            const propertyDef = paradoxProperties[property];
+            if(this[propertyDef.fieldName] !== undefined) {
+                fileContent += "\t\t" + util.format("%s = %s", propertyDef.propertyName, this[propertyDef.fieldName])
             }
         }
         fileContent += "}";
